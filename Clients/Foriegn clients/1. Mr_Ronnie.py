@@ -199,10 +199,50 @@ def main():
                 except:
                     pass  # If hiding fails, continue anyway
 
+                # Ensure modal is fully closed before proceeding
+                try:
+                    modal = driver.find_element(By.ID, "kt_modal_download")
+                    if modal.is_displayed():
+                        print(f"    ⚠ Modal still open, closing it...")
+                        try:
+                            close_btn = modal.find_element(By.XPATH, ".//button[contains(@class, 'btn-close') or contains(@class, 'close')]")
+                            driver.execute_script("arguments[0].click();", close_btn)
+                        except:
+                            # Try to close modal with JavaScript
+                            driver.execute_script("""
+                                var modal = document.getElementById('kt_modal_download');
+                                if (modal) {
+                                    modal.style.display = 'none';
+                                    modal.classList.remove('show');
+                                    var backdrop = document.querySelector('.modal-backdrop');
+                                    if (backdrop) backdrop.remove();
+                                }
+                            """)
+                        # Wait for modal to be fully closed
+                        WebDriverWait(driver, 5).until(
+                            EC.invisibility_of_element_located((By.ID, "kt_modal_download"))
+                        )
+                        time.sleep(1)
+                        print(f"    ✓ Modal closed")
+                except:
+                    pass  # Modal not present, that's fine
+
+                # Wait for loading spinner to disappear
+                try:
+                    WebDriverWait(driver, 10).until(
+                        EC.invisibility_of_element_located((By.ID, "cover-spin"))
+                    )
+                except:
+                    # If spinner still visible, try to hide it
+                    try:
+                        driver.execute_script("document.getElementById('cover-spin').style.display = 'none';")
+                    except:
+                        pass
+
                 # Close dropdown if it's already open (click outside)
                 try:
                     driver.find_element(By.TAG_NAME, "body").click()
-                    time.sleep(0.3)
+                    time.sleep(0.5)
                 except:
                     pass
 
@@ -219,20 +259,38 @@ def main():
 
                 # Open dropdown with retry logic and verification
                 dropdown_opened = False
-                max_retries = 3
+                max_retries = 5  # Increased retries
                 for attempt in range(max_retries):
                     try:
                         print(f"    → Attempting to open dropdown (attempt {attempt + 1}/{max_retries})...")
                         
-                        # Wait for dropdown to be present and clickable
+                        # Ensure modal and spinner are gone before each attempt
+                        try:
+                            driver.execute_script("""
+                                var modal = document.getElementById('kt_modal_download');
+                                if (modal && modal.style.display !== 'none') {
+                                    modal.style.display = 'none';
+                                    modal.classList.remove('show');
+                                }
+                                var spinner = document.getElementById('cover-spin');
+                                if (spinner) spinner.style.display = 'none';
+                            """)
+                        except:
+                            pass
+                        
+                        # Re-find dropdown element on each attempt to avoid stale references
                         state_dropdown = WebDriverWait(driver, 15).until(
                             EC.element_to_be_clickable((By.XPATH,
                                                         "/html/body/form/div[3]/div/div/div[2]/div[2]/div/div/div[1]/div[1]/div[2]/div[1]/div/span/span[1]/span"))
                         )
                         
+                        # Scroll to dropdown
+                        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", state_dropdown)
+                        time.sleep(0.3)
+                        
                         # Try JavaScript click first (more reliable)
                         driver.execute_script("arguments[0].click();", state_dropdown)
-                        time.sleep(0.8)  # Wait a bit longer for dropdown to open
+                        time.sleep(1.0)  # Wait a bit longer for dropdown to open
                         
                         # Verify dropdown actually opened by checking for states container
                         try:
@@ -245,8 +303,13 @@ def main():
                         except:
                             # If verification failed, try regular click as fallback
                             print(f"    ⚠ Dropdown may not have opened, trying regular click...")
+                            # Re-find element again
+                            state_dropdown = WebDriverWait(driver, 10).until(
+                                EC.element_to_be_clickable((By.XPATH,
+                                                            "/html/body/form/div[3]/div/div/div[2]/div[2]/div/div/div[1]/div[1]/div[2]/div[1]/div/span/span[1]/span"))
+                            )
                             state_dropdown.click()
-                            time.sleep(0.8)
+                            time.sleep(1.0)
                             
                             # Verify again
                             try:
@@ -259,15 +322,16 @@ def main():
                             except:
                                 if attempt < max_retries - 1:
                                     print(f"    ⚠ Retrying...")
-                                    time.sleep(1)
+                                    time.sleep(2)
                                     continue
                     except Exception as click_error:
+                        error_msg = str(click_error)[:150]
                         if attempt < max_retries - 1:
-                            print(f"    ⚠ Click failed: {str(click_error)[:100]}, retrying...")
-                            time.sleep(1)
+                            print(f"    ⚠ Click failed: {error_msg}, retrying...")
+                            time.sleep(2)
                             continue
                         else:
-                            raise Exception(f"Failed to open dropdown after {max_retries} attempts: {click_error}")
+                            raise Exception(f"Failed to open dropdown after {max_retries} attempts: {error_msg}")
 
                 if not dropdown_opened:
                     raise Exception("Dropdown did not open after multiple attempts")
@@ -283,15 +347,21 @@ def main():
 
                 print(f"    ✓ Selected: {state_name}")
 
-                # Wait for loading spinner to disappear and page to load (15 seconds)
+                # Wait for loading spinner to disappear and page to load
                 try:
-                    WebDriverWait(driver, 20).until(
+                    WebDriverWait(driver, 25).until(
                         EC.invisibility_of_element_located((By.ID, "cover-spin"))
                     )
-                    print(f"    ✓ Page loaded")
+                    print(f"    ✓ Page loaded (spinner disappeared)")
                 except:
-                    print(f"    ⚠ Loading spinner still visible, proceeding anyway")
+                    print(f"    ⚠ Loading spinner still visible, trying to hide it...")
+                    try:
+                        driver.execute_script("document.getElementById('cover-spin').style.display = 'none';")
+                        print(f"    ✓ Forced spinner to hide")
+                    except:
+                        print(f"    ⚠ Could not hide spinner, proceeding anyway")
 
+                # Wait for state data to load
                 time.sleep(15)  # Wait 15 seconds for state data to load
                 print(f"    → Current URL: {driver.current_url}")
 
@@ -338,42 +408,125 @@ def main():
                     print(f"    ✗ Could not click download button: {click_error}")
                     continue
 
-                # Wait 8 seconds for modal to appear
-                print(f"    ⏳ Waiting 8 seconds for modal...")
-                time.sleep(8)
-
-                # Click the "Here" link in the modal
+                # Wait for modal to appear with better waiting
+                print(f"    ⏳ Waiting for modal to appear...")
                 try:
-                    here_link = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable(
-                            (By.XPATH, "/html/body/form/div[3]/div/div/div[2]/div[3]/div/div/div[2]/div/span/a"))
+                    WebDriverWait(driver, 15).until(
+                        EC.presence_of_element_located((By.ID, "kt_modal_download"))
                     )
-                    here_link.click()
-                    print(f"    ✓ Clicked 'Here' to download {state_name}")
-                except Exception as modal_error:
-                    print(f"    ✗ Could not click 'Here' link: {modal_error}")
-                    continue
+                    # Wait a bit more for modal to be fully visible
+                    time.sleep(2)
+                    print(f"    ✓ Modal appeared")
+                except:
+                    print(f"    ⚠ Modal may not have appeared, proceeding anyway...")
+                    time.sleep(3)
+
+                # Click the "Here" link in the modal with retry logic
+                here_clicked = False
+                max_here_retries = 3
+                for here_attempt in range(max_here_retries):
+                    try:
+                        here_link = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable(
+                                (By.XPATH, "/html/body/form/div[3]/div/div/div[2]/div[3]/div/div/div[2]/div/span/a"))
+                        )
+                        # Try JavaScript click first
+                        driver.execute_script("arguments[0].click();", here_link)
+                        print(f"    ✓ Clicked 'Here' to download {state_name}")
+                        here_clicked = True
+                        break
+                    except Exception as modal_error:
+                        if here_attempt < max_here_retries - 1:
+                            print(f"    ⚠ Could not click 'Here' link (attempt {here_attempt + 1}/{max_here_retries}), retrying...")
+                            time.sleep(2)
+                            continue
+                        else:
+                            print(f"    ✗ Could not click 'Here' link after {max_here_retries} attempts: {modal_error}")
+                            # Try to close modal before continuing
+                            try:
+                                driver.execute_script("""
+                                    var modal = document.getElementById('kt_modal_download');
+                                    if (modal) {
+                                        modal.style.display = 'none';
+                                        modal.classList.remove('show');
+                                    }
+                                """)
+                            except:
+                                pass
+                            continue  # Skip to next state
+
+                if not here_clicked:
+                    continue  # Skip to next state if we couldn't click 'Here'
 
                 # Wait a few seconds for download to start
                 print(f"    ⏳ Waiting for download to start...")
                 time.sleep(3)
 
-                # Close the modal
-                try:
-                    close_button = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable(
-                            (By.XPATH, "/html/body/form/div[3]/div/div/div[2]/div[3]/div/div/div[3]/button"))
-                    )
-                    driver.execute_script("arguments[0].click();", close_button)
-                    print(f"    ✓ Closed modal")
-                except Exception as close_error:
-                    print(f"    ⚠ Could not close modal: {close_error}")
-                    # Try alternative close method with JavaScript
+                # Close the modal - ensure it's fully closed
+                modal_closed = False
+                max_close_retries = 3
+                for close_attempt in range(max_close_retries):
                     try:
-                        driver.execute_script("document.querySelector('[data-bs-dismiss=\"modal\"]').click();")
-                        print(f"    ✓ Closed modal with JavaScript")
+                        # First try to find and click close button
+                        close_button = WebDriverWait(driver, 5).until(
+                            EC.element_to_be_clickable(
+                                (By.XPATH, "/html/body/form/div[3]/div/div/div[2]/div[3]/div/div/div[3]/button"))
+                        )
+                        driver.execute_script("arguments[0].click();", close_button)
+                        time.sleep(1)
+                        
+                        # Verify modal is closed
+                        WebDriverWait(driver, 5).until(
+                            EC.invisibility_of_element_located((By.ID, "kt_modal_download"))
+                        )
+                        modal_closed = True
+                        print(f"    ✓ Closed modal")
+                        break
                     except:
-                        print(f"    ✗ Failed to close modal")
+                        # Try alternative close method with JavaScript
+                        try:
+                            driver.execute_script("""
+                                var modal = document.getElementById('kt_modal_download');
+                                if (modal) {
+                                    modal.style.display = 'none';
+                                    modal.classList.remove('show');
+                                    var backdrop = document.querySelector('.modal-backdrop');
+                                    if (backdrop) backdrop.remove();
+                                }
+                            """)
+                            time.sleep(1)
+                            # Verify it's closed
+                            try:
+                                modal = driver.find_element(By.ID, "kt_modal_download")
+                                if not modal.is_displayed():
+                                    modal_closed = True
+                                    print(f"    ✓ Closed modal with JavaScript")
+                                    break
+                            except:
+                                modal_closed = True
+                                print(f"    ✓ Closed modal with JavaScript")
+                                break
+                        except:
+                            if close_attempt < max_close_retries - 1:
+                                print(f"    ⚠ Could not close modal (attempt {close_attempt + 1}/{max_close_retries}), retrying...")
+                                time.sleep(1)
+                                continue
+                            else:
+                                print(f"    ⚠ Could not close modal after {max_close_retries} attempts, proceeding anyway...")
+                                # Force close with JavaScript
+                                driver.execute_script("""
+                                    var modal = document.getElementById('kt_modal_download');
+                                    if (modal) {
+                                        modal.style.display = 'none';
+                                        modal.classList.remove('show');
+                                    }
+                                    var backdrop = document.querySelector('.modal-backdrop');
+                                    if (backdrop) backdrop.remove();
+                                """)
+                                break
+
+                # Extra wait to ensure modal is fully closed before next iteration
+                time.sleep(1)
 
                 # Short wait before next iteration
                 print(f"    ⏳ Waiting before next state...")
