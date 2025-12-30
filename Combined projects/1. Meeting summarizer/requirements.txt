@@ -1,0 +1,6 @@
+mss
+numpy
+opencv-python
+pyaudio
+pyautogui
+pyinstaller
