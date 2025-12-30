@@ -10,6 +10,7 @@ import datetime
 import pyaudio
 import wave
 import subprocess
+import pyautogui
 import sys
 
 
@@ -251,23 +252,45 @@ class ModernRecorder:
 
     def record_video_loop(self):
         with mss.mss() as sct:
-            # FIX: Use 'mp4v' (lowercase) instead of 'XVID'
-            # This is the correct codec for .mp4 containers
+            # Codec setup
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-
-            # FIX: Change temp file extension to .mp4 to match the codec
             temp_filename = "temp_video.mp4"
 
             fps = 20.0
             w = self.monitor_area["width"]
             h = self.monitor_area["height"]
 
+            # Offsets to calculate relative mouse position
+            monitor_left = self.monitor_area["left"]
+            monitor_top = self.monitor_area["top"]
+
             out = cv2.VideoWriter(temp_filename, fourcc, fps, (w, h))
 
             while self.is_recording:
+                # 1. Grab Screen
                 img = np.array(sct.grab(self.monitor_area))
-                # OpenCV uses BGR, MSS returns BGRA
                 frame = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+                # 2. GET MOUSE POSITION
+                # pyautogui returns (x, y) relative to the whole screen
+                mx, my = pyautogui.position()
+
+                # 3. CALCULATE RELATIVE POSITION
+                # If we are recording a "Custom Area", we need to adjust the coordinates
+                # so the cursor appears in the right spot inside the video
+                rel_x = mx - monitor_left
+                rel_y = my - monitor_top
+
+                # 4. DRAW CURSOR
+                # Only draw if the mouse is actually inside the recording area
+                if 0 <= rel_x < w and 0 <= rel_y < h:
+                    # Draw a cool "Highlighter" style cursor
+                    # Outer Ring (Cyan)
+                    cv2.circle(frame, (rel_x, rel_y), 10, (255, 255, 0), 2)
+                    # Inner Dot (Red)
+                    cv2.circle(frame, (rel_x, rel_y), 3, (0, 0, 255), -1)
+
+                # 5. Write frame
                 out.write(frame)
 
             out.release()
