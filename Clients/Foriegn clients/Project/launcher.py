@@ -9,7 +9,7 @@ class LeadsCampusLauncher:
     def __init__(self, root):
         self.root = root
         self.root.title("LeadsCampus Scraper Launcher")
-        self.root.geometry("600x500")
+        self.root.geometry("800x600")
         self.root.resizable(False, False)
         
         # Center window on screen
