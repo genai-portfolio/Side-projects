@@ -6,10 +6,12 @@ from selenium.common.exceptions import TimeoutException
 import time
 import re
 
+
 def read_credentials():
     email = "ronnie.hudson43@gmail.com"
     password = "55netsdowin7HHY%"
     return email, password
+
 
 def wait_for_page_load(driver, timeout=10):
     """Wait for page to load completely"""
@@ -205,7 +207,8 @@ def main():
                     if modal.is_displayed():
                         print(f"    ⚠ Modal still open, closing it...")
                         try:
-                            close_btn = modal.find_element(By.XPATH, ".//button[contains(@class, 'btn-close') or contains(@class, 'close')]")
+                            close_btn = modal.find_element(By.XPATH,
+                                                           ".//button[contains(@class, 'btn-close') or contains(@class, 'close')]")
                             driver.execute_script("arguments[0].click();", close_btn)
                         except:
                             # Try to close modal with JavaScript
@@ -252,7 +255,8 @@ def main():
                         EC.presence_of_element_located((By.XPATH,
                                                         "/html/body/form/div[3]/div/div/div[2]/div[2]/div/div/div[1]/div[1]/div[2]/div[1]/div/span/span[1]/span"))
                     )
-                    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", state_dropdown_element)
+                    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                                          state_dropdown_element)
                     time.sleep(0.5)
                 except:
                     pass
@@ -263,7 +267,7 @@ def main():
                 for attempt in range(max_retries):
                     try:
                         print(f"    → Attempting to open dropdown (attempt {attempt + 1}/{max_retries})...")
-                        
+
                         # Ensure modal and spinner are gone before each attempt
                         try:
                             driver.execute_script("""
@@ -277,21 +281,22 @@ def main():
                             """)
                         except:
                             pass
-                        
+
                         # Re-find dropdown element on each attempt to avoid stale references
                         state_dropdown = WebDriverWait(driver, 15).until(
                             EC.element_to_be_clickable((By.XPATH,
                                                         "/html/body/form/div[3]/div/div/div[2]/div[2]/div/div/div[1]/div[1]/div[2]/div[1]/div/span/span[1]/span"))
                         )
-                        
+
                         # Scroll to dropdown
-                        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", state_dropdown)
+                        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+                                              state_dropdown)
                         time.sleep(0.3)
-                        
+
                         # Try JavaScript click first (more reliable)
                         driver.execute_script("arguments[0].click();", state_dropdown)
                         time.sleep(1.0)  # Wait a bit longer for dropdown to open
-                        
+
                         # Verify dropdown actually opened by checking for states container
                         try:
                             WebDriverWait(driver, 5).until(
@@ -310,7 +315,7 @@ def main():
                             )
                             state_dropdown.click()
                             time.sleep(1.0)
-                            
+
                             # Verify again
                             try:
                                 WebDriverWait(driver, 5).until(
@@ -373,7 +378,7 @@ def main():
                     )
                     leads_text = leads_element.text.strip()
                     print(f"    → Leads text: {leads_text}")
-                    
+
                     # Extract number from text (e.g., "12,223 leads" or "0 leads")
                     # Remove commas and extract the number
                     numbers = re.findall(r'[\d,]+', leads_text)
@@ -437,7 +442,8 @@ def main():
                         break
                     except Exception as modal_error:
                         if here_attempt < max_here_retries - 1:
-                            print(f"    ⚠ Could not click 'Here' link (attempt {here_attempt + 1}/{max_here_retries}), retrying...")
+                            print(
+                                f"    ⚠ Could not click 'Here' link (attempt {here_attempt + 1}/{max_here_retries}), retrying...")
                             time.sleep(2)
                             continue
                         else:
@@ -474,7 +480,7 @@ def main():
                         )
                         driver.execute_script("arguments[0].click();", close_button)
                         time.sleep(1)
-                        
+
                         # Verify modal is closed
                         WebDriverWait(driver, 5).until(
                             EC.invisibility_of_element_located((By.ID, "kt_modal_download"))
@@ -508,11 +514,13 @@ def main():
                                 break
                         except:
                             if close_attempt < max_close_retries - 1:
-                                print(f"    ⚠ Could not close modal (attempt {close_attempt + 1}/{max_close_retries}), retrying...")
+                                print(
+                                    f"    ⚠ Could not close modal (attempt {close_attempt + 1}/{max_close_retries}), retrying...")
                                 time.sleep(1)
                                 continue
                             else:
-                                print(f"    ⚠ Could not close modal after {max_close_retries} attempts, proceeding anyway...")
+                                print(
+                                    f"    ⚠ Could not close modal after {max_close_retries} attempts, proceeding anyway...")
                                 # Force close with JavaScript
                                 driver.execute_script("""
                                     var modal = document.getElementById('kt_modal_download');
