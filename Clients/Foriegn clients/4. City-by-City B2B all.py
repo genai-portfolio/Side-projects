@@ -13,6 +13,7 @@ import re
 # Try to import pyautogui for fallback clicking
 try:
     import pyautogui
+
     PYAUTOGUI_AVAILABLE = True
 except ImportError:
     PYAUTOGUI_AVAILABLE = False
@@ -153,19 +154,19 @@ def try_click_dropdown(driver, xpath, attempt_num):
             print("      [4] Trying PyAutoGUI physical click...")
             # Get element position relative to viewport
             rect = driver.execute_script("return arguments[0].getBoundingClientRect();", element)
-            
+
             nav_height = driver.execute_script("return window.outerHeight - window.innerHeight;")
             if nav_height <= 0: nav_height = 110
-            
+
             click_x = int(rect['x'] + rect['width'] / 2)
             click_y = int(rect['y'] + rect['height'] / 2 + nav_height)
-            
+
             pyautogui.moveTo(click_x, click_y, duration=0.5)
             pyautogui.click()
             return True
         except Exception as e:
             print(f"      ✗ PyAutoGUI click failed: {str(e)[:50]}")
-    
+
     return False
 
 
@@ -463,10 +464,10 @@ def main():
         print("[7] Waiting for login to complete...")
         # optimized wait as requested: checks for home page URL or max 5s
         try:
-             WebDriverWait(driver, 5).until(
+            WebDriverWait(driver, 5).until(
                 EC.url_contains("Default.aspx")
             )
-             print("✓ Reached home page (Default.aspx)")
+            print("✓ Reached home page (Default.aspx)")
         except:
             print("⚠ 5s timeout reached or not on Default.aspx, proceeding anyway...")
 
@@ -493,13 +494,13 @@ def main():
         # Open state dropdown with correct XPath from config
         print("\n[9] Opening state dropdown...")
         try:
-             try_click_dropdown(driver, xpath_config["dropdown"], 1)
+            try_click_dropdown(driver, xpath_config["dropdown"], 1)
         except:
             state_dropdown = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, xpath_config["dropdown"]))
             )
             state_dropdown.click()
-            
+
         time.sleep(1)
         print("✓ State dropdown opened")
 
@@ -619,11 +620,11 @@ def main():
                 # Open dropdown with retry logic using NEW FUNCTION
                 dropdown_opened = False
                 max_retries = 5
-                
+
                 # Check if we successfully opened it using our multi-strategy approach
                 for attempt in range(max_retries):
-                     if try_click_dropdown(driver, dropdown_xpath, attempt + 1):
-                         # Verify dropdown opened
+                    if try_click_dropdown(driver, dropdown_xpath, attempt + 1):
+                        # Verify dropdown opened
                         try:
                             WebDriverWait(driver, 5).until(
                                 EC.presence_of_element_located((By.CSS_SELECTOR, "ul.select2-results__options"))
@@ -634,7 +635,7 @@ def main():
                         except:
                             print(f"    ⚠ Click seemed successful but dropdown list did not appear. Retrying...")
                             time.sleep(1)
-                     else:
+                    else:
                         print(f"    ⚠ Click attempt failed. Retrying...")
                         time.sleep(2)
 
@@ -672,25 +673,25 @@ def main():
                     leads_text = "0 Leads"
                     max_leads_wait = 20  # Wait up to 20 seconds for leads to load
                     leads_start_time = time.time()
-                    
+
                     while time.time() - leads_start_time < max_leads_wait:
                         try:
                             leads_element = WebDriverWait(driver, 5).until(
                                 EC.presence_of_element_located((By.XPATH, xpath_config["leads_count"]))
                             )
                             leads_text = leads_element.text.strip()
-                            
+
                             # Check if valid number found
                             numbers = re.findall(r'[\d,]+', leads_text)
                             if numbers:
                                 current_count = int(numbers[0].replace(',', ''))
                                 if current_count > 0:
-                                    break # Found valid leads!
+                                    break  # Found valid leads!
                         except:
                             pass
-                            
+
                         time.sleep(1)
-                    
+
                     print(f"    → Leads text: {leads_text}")
 
                     numbers = re.findall(r'[\d,]+', leads_text)
@@ -769,7 +770,8 @@ def main():
 
                 # Wait for the download to actually start and complete
                 # Pass initial_download_files to ensure we catch it even if it started instantly
-                download_started = wait_for_download_to_start(download_dir, timeout=30, initial_files=initial_download_files)
+                download_started = wait_for_download_to_start(download_dir, timeout=30,
+                                                              initial_files=initial_download_files)
 
                 if download_started:
                     # UPDATED timeout to 300s via default arg change
@@ -784,36 +786,38 @@ def main():
                             # Check files again
                             final_files = set(os.listdir(download_dir)) if os.path.exists(download_dir) else set()
                             new_files = final_files - initial_download_files
-                            
+
                             # Filter out partials just in case (though wait_for_download_to_complete should have handled it)
-                            valid_new_files = [f for f in new_files if not (f.endswith('.crdownload') or f.endswith('.tmp') or f.endswith('.part'))]
-                            
+                            valid_new_files = [f for f in new_files if not (
+                                        f.endswith('.crdownload') or f.endswith('.tmp') or f.endswith('.part'))]
+
                             if len(valid_new_files) == 1:
                                 original_filename = valid_new_files[0]
                                 # Create safe state name (Use underscore for spaces)
                                 safe_state_name = state_name.replace(" ", "_")
-                                
+
                                 new_filename = f"{safe_state_name}_{original_filename}"
-                                
+
                                 old_path = os.path.join(download_dir, original_filename)
                                 new_path = os.path.join(download_dir, new_filename)
-                                
+
                                 # Overwrite if exists
                                 if os.path.exists(new_path):
                                     try:
                                         os.remove(new_path)
                                     except:
                                         pass
-                                
+
                                 os.rename(old_path, new_path)
                                 print(f"    ✓ Renamed file to: {new_filename}")
                             elif len(valid_new_files) > 1:
-                                print(f"    ⚠ Multiple new files found, skipping rename to avoid confusion: {valid_new_files}")
+                                print(
+                                    f"    ⚠ Multiple new files found, skipping rename to avoid confusion: {valid_new_files}")
                             else:
                                 print(f"    ⚠ Could not identify the new file for renaming")
-                                
+
                         except Exception as rename_error:
-                             print(f"    ⚠ Rename failed: {rename_error}")
+                            print(f"    ⚠ Rename failed: {rename_error}")
 
                     else:
                         print(f"    ⚠ Download may not have completed for {state_name}")
