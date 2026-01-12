@@ -1,9 +1,19 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import subprocess
 import sys
 import os
 
+
+try:
+    import B2B
+except ImportError:
+    B2B = None
+
+try:
+    import B2C
+except ImportError:
+    B2C = None
 
 class LeadsCampusLauncher:
     def __init__(self, root):
@@ -19,7 +29,17 @@ class LeadsCampusLauncher:
         self.root.configure(bg='#2c3e50')
         
         self.create_widgets()
+        
+        # Check if modules are available
+        if not B2B or not B2C:
+            self.root.after(100, self.warn_missing_modules)
     
+    def warn_missing_modules(self):
+        missing = []
+        if not B2B: missing.append("B2B.py")
+        if not B2C: missing.append("B2C.py")
+        self.show_error(f"Warning: The following files were not found or have errors:\n{', '.join(missing)}\n\nPlease ensure they are in the same folder as launcher.py")
+
     def center_window(self):
         """Center the window on the screen"""
         self.root.update_idletasks()
@@ -109,46 +129,42 @@ class LeadsCampusLauncher:
             bg='#2c3e50'
         )
         footer_label.pack(side='bottom', pady=(20, 0))
-    
+
     def launch_b2c(self):
         """Launch the B2C scraper"""
+        if not B2C:
+            self.show_error("B2C module not loaded correctly.")
+            return
+        
         try:
-            # Get the directory where this script is located
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            b2c_path = os.path.join(script_dir, "B2C.py")
-            
-            if not os.path.exists(b2c_path):
-                self.show_error("B2C.py not found in the current directory!")
-                return
-            
-            # Launch B2C scraper as a subprocess
-            subprocess.Popen([sys.executable, b2c_path])
-            
-            # Close the launcher window
+            # We must destroy the current root before starting a new mainloop
             self.root.destroy()
-            
+            # Call the main function of the B2C module
+            B2C.main()
         except Exception as e:
-            self.show_error(f"Failed to launch B2C scraper:\n{str(e)}")
-    
+            # Re-create a root for error display if destroyed
+            temp_root = tk.Tk()
+            temp_root.withdraw()
+            messagebox.showerror("Error", f"Failed to launch B2C scraper:\n{str(e)}")
+            temp_root.destroy()
+
     def launch_b2b(self):
         """Launch the B2B scraper"""
+        if not B2B:
+            self.show_error("B2B module not loaded correctly.")
+            return
+            
         try:
-            # Get the directory where this script is located
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            b2b_path = os.path.join(script_dir, "B2B.py")
-            
-            if not os.path.exists(b2b_path):
-                self.show_error("B2B.py not found in the current directory!")
-                return
-            
-            # Launch B2B scraper as a subprocess
-            subprocess.Popen([sys.executable, b2b_path])
-            
-            # Close the launcher window
+            # We must destroy the current root before starting a new mainloop
             self.root.destroy()
-            
+            # Call the main function of the B2B module
+            B2B.main()
         except Exception as e:
-            self.show_error(f"Failed to launch B2B scraper:\n{str(e)}")
+            # Re-create a root for error display if destroyed
+            temp_root = tk.Tk()
+            temp_root.withdraw()
+            messagebox.showerror("Error", f"Failed to launch B2B scraper:\n{str(e)}")
+            temp_root.destroy()
     
     def show_error(self, message):
         """Show error message in a popup"""
