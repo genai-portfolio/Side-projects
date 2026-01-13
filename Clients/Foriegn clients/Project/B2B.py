@@ -37,14 +37,24 @@ def wait_for_page_load(driver, timeout=10):
         return False
 
 
-def wait_for_download_to_start(download_dir, timeout=30, initial_files=None):
+def wait_for_download_to_start(download_dir, timeout=120, initial_files=None, log_callback=None):
     """Wait for a new file to appear in the download directory"""
     if initial_files is None:
         initial_files = set(os.listdir(download_dir)) if os.path.exists(download_dir) else set()
 
     start_time = time.time()
+    last_log_time = start_time
+    
     while time.time() - start_time < timeout:
         time.sleep(1)
+        
+        # Log progress every 30 seconds
+        if time.time() - last_log_time >= 30:
+            elapsed = int((time.time() - start_time) / 60)
+            if log_callback:
+                log_callback(f"    ⏳ Still waiting for download to start... ({elapsed} min elapsed)")
+            last_log_time = time.time()
+            
         current_files = set(os.listdir(download_dir)) if os.path.exists(download_dir) else set()
         new_files = current_files - initial_files
 
@@ -54,11 +64,20 @@ def wait_for_download_to_start(download_dir, timeout=30, initial_files=None):
     return False
 
 
-def wait_for_download_to_complete(download_dir, timeout=300):
+def wait_for_download_to_complete(download_dir, timeout=1800, log_callback=None):
     """Wait for all downloads to complete (no .crdownload or .tmp files)"""
     start_time = time.time()
+    last_log_time = start_time
+    
     while time.time() - start_time < timeout:
         time.sleep(2)
+
+        # Log progress every 30 seconds
+        if time.time() - last_log_time >= 30:
+            elapsed = int((time.time() - start_time) / 60)
+            if log_callback:
+                log_callback(f"    ⏳ Still downloading... ({elapsed} min elapsed)")
+            last_log_time = time.time()
 
         if os.path.exists(download_dir):
             files = os.listdir(download_dir)
@@ -897,15 +916,15 @@ class B2BScraperGUI:
                         continue
 
                     # Wait for download
-                    self.log(f"    ⏳ Waiting for download...")
-                    download_started = wait_for_download_to_start(download_folder, timeout=30, initial_files=initial_download_files)
+                    self.log(f"    ⏳ Waiting for download (Max 30m)...")
+                    download_started = wait_for_download_to_start(download_folder, timeout=120, initial_files=initial_download_files, log_callback=self.log)
 
                     if download_started:
-                        download_completed = wait_for_download_to_complete(download_folder, timeout=300)
+                        download_completed = wait_for_download_to_complete(download_folder, timeout=1800, log_callback=self.log)
 
                         if download_completed:
                             successful_downloads += 1
-                            self.log(f"    ✓ Download successful")
+                            self.log(f"    ✓ Download detected")
 
                             # Rename file
                             try:
@@ -929,7 +948,9 @@ class B2BScraperGUI:
                                             pass
 
                                     os.rename(old_path, new_path)
+                                    file_size = os.path.getsize(new_path) / (1024 * 1024)  # Size in MB
                                     self.log(f"    ✓ Renamed to: {new_filename}")
+                                    self.log(f"    ✓ Verified: {new_filename} ({file_size:.2f} MB)")
                                     self.log(f"    📁 Saved to: {download_folder}")
                                 elif len(valid_new_files) > 1:
                                     self.log(f"    ⚠ Multiple files found, skipping rename")

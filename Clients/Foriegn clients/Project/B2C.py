@@ -56,7 +56,15 @@ class DownloadHandler(FileSystemEventHandler):
                 # Rename the file
                 os.rename(file_path, new_path)
                 self.processed_files.add(file_name)
-                self.log_callback(f"    ✓ Renamed file to: {new_name}")
+                
+                # Verify and log size
+                if os.path.exists(new_path):
+                    file_size = os.path.getsize(new_path) / (1024 * 1024)
+                    self.log_callback(f"    ✓ Renamed file to: {new_name}")
+                    self.log_callback(f"    ✓ Verified: {new_name} ({file_size:.2f} MB)")
+                else:
+                    self.log_callback(f"    ✓ Renamed file to: {new_name}")
+                
                 return new_path  # Return the new file path
             except Exception as e:
                 self.log_callback(f"    ⚠ Could not rename file: {e}")
@@ -293,7 +301,7 @@ class StateScraperGUI:
         """Normalize state name for comparison (title case)"""
         return state_name.strip().title()
 
-    def wait_for_download(self, download_folder, state_name, timeout=60):
+    def wait_for_download(self, download_folder, state_name, timeout=1800):
         """Wait for a file to be downloaded and verify it's complete, then rename with state prefix"""
         try:
             # Get initial files in download folder
@@ -302,12 +310,19 @@ class StateScraperGUI:
                 initial_files = set(os.listdir(download_folder))
 
             start_time = time.time()
+            last_log_time = start_time
             downloaded_file = None
 
             # Wait for new file to appear
             while time.time() - start_time < timeout:
                 if not self.is_running:
                     return False
+
+                # Log progress every 30 seconds
+                if time.time() - last_log_time >= 30:
+                    elapsed = int((time.time() - start_time) / 60)
+                    self.log(f"    ⏳ Still downloading... ({elapsed} min elapsed)")
+                    last_log_time = time.time()
 
                 current_files = set(os.listdir(download_folder))
                 new_files = current_files - initial_files
@@ -341,7 +356,9 @@ class StateScraperGUI:
 
                                             # Rename the file
                                             os.rename(file_path, new_path)
+                                            file_size = os.path.getsize(new_path) / (1024 * 1024)
                                             self.log(f"    ✓ Renamed to: {new_name}")
+                                            self.log(f"    ✓ Verified: {new_name} ({file_size:.2f} MB)")
                                         except Exception as rename_error:
                                             self.log(f"    ⚠ Could not rename file: {str(rename_error)[:50]}")
 
@@ -352,7 +369,7 @@ class StateScraperGUI:
                 time.sleep(1)
 
             # Timeout reached
-            self.log(f"    ⚠ Download timeout after {timeout}s")
+            self.log(f"    ⚠ Download timeout after {int(timeout/60)}m")
             return False
 
         except Exception as e:
@@ -850,8 +867,8 @@ class StateScraperGUI:
                         continue
 
                     # Wait for download to start and complete
-                    self.log(f"    ⏳ Waiting for download to complete...")
-                    download_verified = self.wait_for_download(download_folder, state_name, timeout=60)
+                    self.log(f"    ⏳ Waiting for download (Max 30m)...")
+                    download_verified = self.wait_for_download(download_folder, state_name, timeout=1800)
 
                     if download_verified:
                         self.log(f"    ✓ Download completed and verified")
