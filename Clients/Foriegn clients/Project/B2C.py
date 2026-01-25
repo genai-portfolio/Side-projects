@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import json
+from datetime import datetime
 
 
 class DownloadHandler(FileSystemEventHandler):
@@ -68,6 +70,57 @@ class DownloadHandler(FileSystemEventHandler):
                 return new_path  # Return the new file path
             except Exception as e:
                 self.log_callback(f"    ⚠ Could not rename file: {e}")
+
+
+def load_download_state(state_file="download_state.json"):
+    """Load download state from JSON file"""
+    try:
+        if os.path.exists(state_file):
+            with open(state_file, 'r') as f:
+                return json.load(f)
+    except:
+        pass
+    return {}
+
+
+def save_download_state(state_data, state_file="download_state.json"):
+    """Save download state to JSON file"""
+    try:
+        with open(state_file, 'w') as f:
+            json.dump(state_data, f, indent=2)
+        return True
+    except:
+        return False
+
+
+def get_state_key(scraper_type, state_name):
+    """Generate unique key for state combination"""
+    return f"{scraper_type}.SMS_Leads.{state_name}"
+
+
+def should_download(state_key, current_lead_count, state_data):
+    """Check if file should be downloaded based on lead count comparison"""
+    if state_key not in state_data:
+        return True, "New state - never downloaded before"
+    
+    stored_count = state_data[state_key].get("lead_count", 0)
+    
+    if current_lead_count != stored_count:
+        return True, f"Lead count changed: {stored_count:,} → {current_lead_count:,}"
+    
+    return False, f"Already up-to-date ({current_lead_count:,} leads)"
+
+
+def update_download_state(state_data, state_key, lead_count, filename):
+    """Update state data with new download information"""
+    state_data[state_key] = {
+        "lead_count": lead_count,
+        "last_download": datetime.now().isoformat(),
+        "filename": filename
+    }
+    return state_data
+
+
 
 
 class StateScraperGUI:
@@ -140,9 +193,22 @@ class StateScraperGUI:
         ttk.Radiobutton(state_frame, text="Specific State:", variable=self.state_mode,
                         value="specific", command=self.toggle_state_entry).pack(side=tk.LEFT)
 
+        # State dropdown with all US states
         self.state_var = tk.StringVar()
-        self.state_entry = ttk.Entry(state_frame, textvariable=self.state_var, width=20, state='disabled')
-        self.state_entry.pack(side=tk.LEFT, padx=(5, 0))
+        self.state_combo = ttk.Combobox(state_frame, textvariable=self.state_var, width=18, state='disabled')
+        self.state_combo['values'] = (
+            "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+            "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+            "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
+            "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+            "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+            "New Hampshire", "New Jersey", "New Mexico", "New York",
+            "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
+            "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+            "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
+            "West Virginia", "Wisconsin", "Wyoming"
+        )
+        self.state_combo.pack(side=tk.LEFT, padx=(5, 0))
 
         # Download Folder
         ttk.Label(config_frame, text="Download Folder:", style='Header.TLabel').grid(row=3, column=0, sticky=tk.W,
@@ -162,7 +228,12 @@ class StateScraperGUI:
         self.stop_button = ttk.Button(button_frame, text="⬛ Stop",
                                       command=self.stop_scraping, style='Stop.TButton',
                                       width=15, state='disabled')
-        self.stop_button.pack(side=tk.LEFT)
+        self.stop_button.pack(side=tk.LEFT, padx=(0, 10))
+
+        # Go Back button
+        self.back_button = ttk.Button(button_frame, text="← Go Back",
+                                      command=self.go_back_to_launcher, width=15)
+        self.back_button.pack(side=tk.LEFT)
 
         # Status Frame
         status_frame = ttk.Frame(main_frame)
@@ -196,9 +267,36 @@ class StateScraperGUI:
 
     def toggle_state_entry(self):
         if self.state_mode.get() == "specific":
-            self.state_entry.config(state='normal')
+            self.state_combo.config(state='readonly')
         else:
-            self.state_entry.config(state='disabled')
+            self.state_combo.config(state='disabled')
+
+    def go_back_to_launcher(self):
+        """Close this window and restart the launcher"""
+        if self.is_running:
+            response = messagebox.askyesno(
+                "Scraper Running",
+                "The scraper is currently running. Are you sure you want to go back?\nThis will stop the scraper."
+            )
+            if not response:
+                return
+            self.stop_scraping()
+        
+        # Close the current window
+        self.root.destroy()
+        
+        # Restart the launcher
+        try:
+            import subprocess
+            import sys
+            subprocess.Popen([sys.executable, "launcher.py"])
+        except:
+            # If subprocess fails, try importing and running directly
+            try:
+                import launcher
+                launcher.main()
+            except:
+                pass
 
     def log(self, message):
         """Add message to logs with timestamp"""
@@ -576,8 +674,13 @@ class StateScraperGUI:
             if not self.is_running:
                 return
 
+            # Load download state
+            self.log("\n[10] Loading download state...")
+            state_data = load_download_state()
+            self.log(f"✓ Loaded state for {len(state_data)} previous downloads")
+
             # Process each state
-            self.log("\n[10] Starting download process...\n")
+            self.log("\n[11] Starting download process...\n")
             for idx, state_name in enumerate(states_to_download, 1):
                 if not self.is_running:
                     break
@@ -810,9 +913,26 @@ class StateScraperGUI:
                             continue
                     except Exception as check_error:
                         self.log(f"    ⚠ Could not check leads count, proceeding...")
+                        lead_count = None
 
                     if not self.is_running:
                         break
+
+                    # Check if download is needed based on state
+                    if lead_count is not None:
+                        state_key = get_state_key("B2C", state_name)
+                        needs_download, reason = should_download(state_key, lead_count, state_data)
+                        
+                        if not needs_download:
+                            self.log(f"    ✓ {reason}")
+                            self.log(f"    → Skipping download")
+                            # Stop observer
+                            if self.observer:
+                                self.observer.stop()
+                                self.observer = None
+                            continue
+                        else:
+                            self.log(f"    → {reason}")
 
                     # Click download button
                     try:
@@ -873,6 +993,24 @@ class StateScraperGUI:
                     if download_verified:
                         self.log(f"    ✓ Download completed and verified")
                         self.downloaded_files.append(state_name)
+                        
+                        # Update state with new download info
+                        if lead_count is not None:
+                            # Get the downloaded filename from the download folder
+                            downloaded_filename = None
+                            try:
+                                files = os.listdir(download_folder)
+                                for file in files:
+                                    if file.startswith(state_name) and file.endswith(('.csv', '.xlsx', '.xls')):
+                                        downloaded_filename = file
+                                        break
+                            except:
+                                pass
+                            
+                            state_key = get_state_key("B2C", state_name)
+                            state_data = update_download_state(state_data, state_key, lead_count, downloaded_filename or "unknown")
+                            save_download_state(state_data)
+                            self.log(f"    ✓ Updated download state")
                     else:
                         self.log(f"    ⚠ Could not verify download completion")
 

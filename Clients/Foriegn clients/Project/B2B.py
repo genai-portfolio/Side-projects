@@ -17,6 +17,8 @@ import os
 import re
 import threading
 from pathlib import Path
+import json
+from datetime import datetime
 
 # Try to import pyautogui for fallback clicking
 try:
@@ -221,6 +223,58 @@ def get_xpath_config(db_choice, data_type):
             }
 
 
+def load_download_state(state_file="download_state.json"):
+    """Load download state from JSON file"""
+    try:
+        if os.path.exists(state_file):
+            with open(state_file, 'r') as f:
+                return json.load(f)
+    except:
+        pass
+    return {}
+
+
+def save_download_state(state_data, state_file="download_state.json"):
+    """Save download state to JSON file"""
+    try:
+        with open(state_file, 'w') as f:
+            json.dump(state_data, f, indent=2)
+        return True
+    except:
+        return False
+
+
+def get_state_key(scraper_type, database, data_type, state_name):
+    """Generate unique key for state/database combination"""
+    # Normalize names for consistent keys
+    db_normalized = database.replace(" ", "_")
+    type_normalized = "Emails" if data_type == "1" else "Phones"
+    return f"{scraper_type}.{db_normalized}.{state_name}.{type_normalized}"
+
+
+def should_download(state_key, current_lead_count, state_data):
+    """Check if file should be downloaded based on lead count comparison"""
+    if state_key not in state_data:
+        return True, "New state - never downloaded before"
+    
+    stored_count = state_data[state_key].get("lead_count", 0)
+    
+    if current_lead_count != stored_count:
+        return True, f"Lead count changed: {stored_count:,} → {current_lead_count:,}"
+    
+    return False, f"Already up-to-date ({current_lead_count:,} leads)"
+
+
+def update_download_state(state_data, state_key, lead_count, filename):
+    """Update state data with new download information"""
+    state_data[state_key] = {
+        "lead_count": lead_count,
+        "last_download": datetime.now().isoformat(),
+        "filename": filename
+    }
+    return state_data
+
+
 class B2BScraperGUI:
     def __init__(self, root):
         self.root = root
@@ -304,9 +358,22 @@ class B2BScraperGUI:
         ttk.Radiobutton(state_frame, text="Specific State:", variable=self.state_mode,
                         value="specific", command=self.toggle_state_entry).pack(side=tk.LEFT)
 
+        # State dropdown with all US states
         self.state_var = tk.StringVar()
-        self.state_entry = ttk.Entry(state_frame, textvariable=self.state_var, width=20, state='disabled')
-        self.state_entry.pack(side=tk.LEFT, padx=(5, 0))
+        self.state_combo = ttk.Combobox(state_frame, textvariable=self.state_var, width=18, state='disabled')
+        self.state_combo['values'] = (
+            "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+            "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+            "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
+            "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+            "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+            "New Hampshire", "New Jersey", "New Mexico", "New York",
+            "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
+            "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+            "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
+            "West Virginia", "Wisconsin", "Wyoming"
+        )
+        self.state_combo.pack(side=tk.LEFT, padx=(5, 0))
 
         # Download Folder
         ttk.Label(config_frame, text="Download Folder:", style='Header.TLabel').grid(row=5, column=0, sticky=tk.W, pady=5)
@@ -325,7 +392,12 @@ class B2BScraperGUI:
         self.stop_button = ttk.Button(button_frame, text="⬛ Stop",
                                       command=self.stop_scraping, style='Stop.TButton',
                                       width=15, state='disabled')
-        self.stop_button.pack(side=tk.LEFT)
+        self.stop_button.pack(side=tk.LEFT, padx=(0, 10))
+
+        # Go Back button
+        self.back_button = ttk.Button(button_frame, text="← Go Back",
+                                      command=self.go_back_to_launcher, width=15)
+        self.back_button.pack(side=tk.LEFT)
 
         # Status Frame
         status_frame = ttk.Frame(main_frame)
@@ -359,9 +431,36 @@ class B2BScraperGUI:
 
     def toggle_state_entry(self):
         if self.state_mode.get() == "specific":
-            self.state_entry.config(state='normal')
+            self.state_combo.config(state='readonly')
         else:
-            self.state_entry.config(state='disabled')
+            self.state_combo.config(state='disabled')
+
+    def go_back_to_launcher(self):
+        """Close this window and restart the launcher"""
+        if self.is_running:
+            response = messagebox.askyesno(
+                "Scraper Running",
+                "The scraper is currently running. Are you sure you want to go back?\nThis will stop the scraper."
+            )
+            if not response:
+                return
+            self.stop_scraping()
+        
+        # Close the current window
+        self.root.destroy()
+        
+        # Restart the launcher
+        try:
+            import subprocess
+            import sys
+            subprocess.Popen([sys.executable, "launcher.py"])
+        except:
+            # If subprocess fails, try importing and running directly
+            try:
+                import launcher
+                launcher.main()
+            except:
+                pass
 
     def log(self, message):
         """Add message to logs with timestamp"""
@@ -690,8 +789,13 @@ class B2BScraperGUI:
             if not self.is_running:
                 return
 
+            # Load download state
+            self.log("\n[10] Loading download state...")
+            state_data = load_download_state()
+            self.log(f"✓ Loaded state for {len(state_data)} previous downloads")
+
             # Process each state
-            self.log("\n[10] Starting download process...\n")
+            self.log("\n[11] Starting download process...\n")
             successful_downloads = 0
             skipped_states = 0
 
@@ -854,9 +958,23 @@ class B2BScraperGUI:
                             continue
                     except Exception as check_error:
                         self.log(f"    ⚠ Could not check leads count, proceeding...")
+                        lead_count = None
 
                     if not self.is_running:
                         break
+
+                    # Check if download is needed based on state
+                    if lead_count is not None:
+                        state_key = get_state_key("B2B", db_name, data_type, state_name)
+                        needs_download, reason = should_download(state_key, lead_count, state_data)
+                        
+                        if not needs_download:
+                            self.log(f"    ✓ {reason}")
+                            self.log(f"    → Skipping download")
+                            skipped_states += 1
+                            continue
+                        else:
+                            self.log(f"    → {reason}")
 
                     # Click download button
                     try:
@@ -921,11 +1039,25 @@ class B2BScraperGUI:
 
                     if download_started:
                         download_completed = wait_for_download_to_complete(download_folder, timeout=1800, log_callback=self.log)
-
                         if download_completed:
                             successful_downloads += 1
                             self.log(f"    ✓ Download detected")
 
+                            # Get the downloaded filename
+                            current_files = set(os.listdir(download_folder)) if os.path.exists(download_folder) else set()
+                            new_files = current_files - initial_download_files
+                            downloaded_filename = None
+                            for file in new_files:
+                                if file.endswith(('.csv', '.xlsx', '.xls')) and not file.endswith('.crdownload'):
+                                    downloaded_filename = file
+                                    break
+
+                            # Update state with new download info
+                            if lead_count is not None:
+                                state_key = get_state_key("B2B", db_name, data_type, state_name)
+                                state_data = update_download_state(state_data, state_key, lead_count, downloaded_filename or "unknown")
+                                save_download_state(state_data)
+                                self.log(f"    ✓ Updated download state")
                             # Rename file
                             try:
                                 final_files = set(os.listdir(download_folder)) if os.path.exists(download_folder) else set()
