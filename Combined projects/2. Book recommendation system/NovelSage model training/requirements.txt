@@ -1,0 +1,9 @@
+scikit-learn
+pandas
+numpy
+Requests
+scipy
+pytest
+flask
+pathlib
+gunicorn
