@@ -137,7 +137,7 @@ class LeadsCampusLauncher:
             return
         
         try:
-            # We must destroy the current root before starting a new mainloop
+            # Destroy the launcher window
             self.root.destroy()
             # Call the main function of the B2C module
             B2C.main()
@@ -155,7 +155,7 @@ class LeadsCampusLauncher:
             return
             
         try:
-            # We must destroy the current root before starting a new mainloop
+            # Destroy the launcher window
             self.root.destroy()
             # Call the main function of the B2B module
             B2B.main()

@@ -436,7 +436,7 @@ class B2BScraperGUI:
             self.state_combo.config(state='disabled')
 
     def go_back_to_launcher(self):
-        """Close this window and restart the launcher"""
+        """Close this window and return to the launcher"""
         if self.is_running:
             response = messagebox.askyesno(
                 "Scraper Running",
@@ -446,21 +446,37 @@ class B2BScraperGUI:
                 return
             self.stop_scraping()
         
-        # Close the current window
-        self.root.destroy()
-        
-        # Restart the launcher
+        # Restart the launcher correctly for both script and EXE
         try:
             import subprocess
             import sys
-            subprocess.Popen([sys.executable, "launcher.py"])
+            import os
+            
+            # CRITICAL: Directly remove these from the current process's environment.
+            # This ensures that ANY child process (via os.startfile or subprocess)
+            # does NOT inherit the temporary paths from this process, which
+            # prevents the "init.tcl" error in bundled executables.
+            for var in ['TCL_LIBRARY', 'TK_LIBRARY', 'PYI_REPACKED_STRUCTURE']:
+                if var in os.environ:
+                    del os.environ[var]
+            
+            if getattr(sys, 'frozen', False):
+                # We are running as a PyInstaller bundle
+                # If we're in 'dist', we could try to find 'launcher.py' one level up
+                # as a fallback, but generally we want to restart the EXE itself.
+                exe_path = sys.executable
+                try:
+                    os.startfile(exe_path)
+                except:
+                    subprocess.Popen([exe_path])
+            else:
+                # We are running as a normal Python script
+                subprocess.Popen([sys.executable, "launcher.py"])
         except:
-            # If subprocess fails, try importing and running directly
-            try:
-                import launcher
-                launcher.main()
-            except:
-                pass
+            pass
+            
+        # Close the current window
+        self.root.destroy()
 
     def log(self, message):
         """Add message to logs with timestamp"""
