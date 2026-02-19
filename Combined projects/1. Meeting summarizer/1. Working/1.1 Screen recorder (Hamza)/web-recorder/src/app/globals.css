@@ -1,0 +1,300 @@
+:root {
+  --bg-color: #05070a;
+  --panel-bg: rgba(10, 15, 25, 0.7);
+  --accent-color: #facc15;
+  /* Electric Yellow */
+  --accent-glow: rgba(250, 204, 21, 0.4);
+  --stop-color: #ef4444;
+  --active-color: #22c55e;
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --lightning-bg: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #05070a 100%);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--lightning-bg);
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Lightning Background Effect */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(250, 204, 21, 0.05) 0%, transparent 60%);
+  animation: lightning-strike 5s infinite;
+  pointer-events: none;
+}
+
+@keyframes lightning-strike {
+
+  0%,
+  90%,
+  100% {
+    opacity: 0;
+  }
+
+  92% {
+    opacity: 1;
+  }
+
+  93% {
+    opacity: 0.3;
+  }
+
+  94% {
+    opacity: 1;
+  }
+
+  95% {
+    opacity: 0;
+  }
+}
+
+.recorder-container {
+  background: var(--panel-bg);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 32px;
+  padding: 50px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(250, 204, 21, 0.1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Scanning Line Effect */
+.recorder-container::after {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, var(--accent-glow), transparent);
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  0% {
+    top: -10%;
+  }
+
+  100% {
+    top: 110%;
+  }
+}
+
+h1 {
+  font-weight: 900;
+  font-size: 2.2rem;
+  color: var(--accent-color);
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 40px;
+  font-weight: 500;
+}
+
+.section {
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: block;
+  margin-bottom: 12px;
+  margin-left: 4px;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  padding: 14px 24px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn.active {
+  background: var(--accent-color);
+  color: #000;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.btn-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-toggle.on {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--active-color);
+  color: var(--active-color);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #eab308 100%);
+  color: #000;
+  width: 100%;
+  padding: 18px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  border: none;
+  border-radius: 20px;
+  margin-top: 20px;
+  box-shadow: 0 10px 30px -10px rgba(250, 204, 21, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 15px 40px -10px rgba(250, 204, 21, 0.6);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-stop {
+  background: var(--stop-color);
+  color: #fff;
+  width: 100%;
+  padding: 18px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  margin: 30px 0;
+  text-shadow: 0 0 30px var(--accent-glow);
+}
+
+.status-label {
+  font-size: 1.2rem;
+  color: var(--text-main);
+  margin-bottom: 40px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pulse-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--stop-color);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.footer-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 30px;
+  opacity: 0.6;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animations for recording state */
+.recording-pulse {
+  animation: timer-pulse 1s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes timer-pulse {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
