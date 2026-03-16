@@ -20,7 +20,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import openpyxl
@@ -39,13 +39,39 @@ MAX_LISTINGS     = 25     # listings per page
 TOTAL_PAGES      = 30     # total pages to scrape (30 pages × 25 = 750 listings)
 CHROME_WAIT_SEC  = 3
 
+# ─────────────────────────────────────────────
+# GOOGLE SHEETS CONFIG
+# ─────────────────────────────────────────────
+CLIENT_SECRET    = "client_secret.json"   # OAuth credentials from Google Cloud
+
+def load_sheet_id() -> str:
+    """Read spreadsheet_id from client_secret.json — client edits this one file."""
+    import json as _json
+    try:
+        with open(CLIENT_SECRET, encoding="utf-8") as f:
+            data = _json.load(f)
+        sid = data.get("spreadsheet_id", "").strip()
+        if not sid:
+            print("[Sheets] ⚠  No 'spreadsheet_id' found in client_secret.json")
+            print("[Sheets]    Add it like this:")
+            print('           "spreadsheet_id": "your-sheet-id-here"')
+        return sid
+    except FileNotFoundError:
+        return ""
+    except Exception as e:
+        print(f"[Sheets] ⚠  Could not read {CLIENT_SECRET}: {e}")
+        return ""
+
+TOKEN_FILE       = "gsheets_token.json"   # saved after first login — never delete
+UPLOAD_TO_SHEETS = True                   # set False to skip upload
+
 COUNTRIES     = {"1": "USA", "2": "France", "3": "Spain", "4": "United Kingdom", "5": "Canada"}
 LISTING_TYPES = {"1": "For Lease", "2": "For Sale"}
 
 FIELDNAMES      = ["name", "building", "address", "size", "price", "brokers", "last_seen", "first_seen"]
-FIELDNAMES_SALE = ["name", "building", "address", "size", "price", "auction_date", "brokers", "last_seen", "first_seen"]
+FIELDNAMES_SALE = ["name", "building", "address", "size", "price", "auction_date", "last_seen", "first_seen"]
 TRACK      = ["building", "address", "size", "price", "brokers"]
-TRACK_SALE = ["building", "address", "size", "price", "auction_date", "brokers"]
+TRACK_SALE = ["building", "address", "size", "price", "auction_date"]
 
 def xlsx_path(country: str, listing_type: str = "For Lease") -> str:
     slug  = country.lower().replace(" ", "_")
@@ -646,7 +672,7 @@ async def scrape_card(page, ul: int, li: int, listing_type: str = "For Lease") -
         "size":     size,
         "price":    price,
         "brokers":  brokers,
-        "date":     str(date.today()),
+        "date":     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     if is_auction_card:
         row["auction_date"] = auction_date
@@ -659,14 +685,20 @@ async def scroll_to_load(page, needed: int):
     """Scroll down until enough cards are loaded or page stops growing."""
     prev_height = 0
     for _ in range(20):
-        count = await page.evaluate(
-            "() => document.querySelectorAll('article').length"
-        )
+        try:
+            count = await page.evaluate(
+                "() => document.querySelectorAll('article').length"
+            )
+        except Exception:
+            break   # page navigated mid-scroll — stop gracefully
         if count >= needed:
             break
-        await page.mouse.wheel(0, random.randint(600, 1000))
-        await page.wait_for_timeout(random.randint(1200, 2000))
-        cur_height = await page.evaluate("document.body.scrollHeight")
+        try:
+            await page.mouse.wheel(0, random.randint(600, 1000))
+            await page.wait_for_timeout(random.randint(800, 1500))
+            cur_height = await page.evaluate("document.body.scrollHeight")
+        except Exception:
+            break   # execution context destroyed — stop gracefully
         if cur_height == prev_height:
             break
         prev_height = cur_height
@@ -753,6 +785,11 @@ async def scrape_listings(page, total_pages: int, per_page: int,
             delay_ms = random.randint(3000, 8000)
             print(f"  ⏳ Waiting {delay_ms/1000:.1f}s ...")
             await page.wait_for_timeout(delay_ms)
+            # Wait for DOM to be ready before any evaluate() calls
+            try:
+                await page.wait_for_selector("article", state="attached", timeout=8000)
+            except Exception:
+                pass   # continue even if no articles yet
 
         listings = await scrape_one_page(page, page_num, per_page, listing_type)
         all_listings.extend(listings)
@@ -773,8 +810,8 @@ COL_WIDTHS = {
     "D": 22,   # size
     "E": 22,   # price
     "F": 38,   # brokers
-    "G": 14,   # first_seen
-    "H": 14,   # last_seen
+    "G": 20,   # first_seen
+    "H": 20,   # last_seen
 }
 
 HEADERS = ["Name", "Building", "Address", "Size", "Price", "Brokers", "First Seen", "Last Seen"]
@@ -814,36 +851,39 @@ def save_xlsx(rows: dict[str, dict], path: str, country: str, listing_type: str 
     ws = wb.active
     ws.title = country
 
-    # Choose column config based on listing type
-    if listing_type == "For Sale":
+    # Column config:
+    # USA For Sale  → auction columns, NO brokers
+    # All others    → standard columns with brokers
+    is_usa_auction = (listing_type == "For Sale" and country == "USA")
+
+    if is_usa_auction:
         col_widths = {
-            "A": 30,  # name
-            "B": 28,  # building
-            "C": 28,  # address
-            "D": 18,  # size
-            "E": 22,  # price (starting bid)
-            "F": 22,  # auction date
-            "G": 38,  # brokers
-            "H": 14,  # first seen
-            "I": 14,  # last seen
+            "A": 30,   # name
+            "B": 28,   # building
+            "C": 28,   # address
+            "D": 18,   # size
+            "E": 22,   # starting bid
+            "F": 30,   # auction date/status
+            "G": 20,   # first seen
+            "H": 20,   # last seen
         }
-        headers = ["Name", "Building", "Address", "Size", "Starting Bid", "Auction Date", "Brokers", "First Seen", "Last Seen"]
+        headers = ["Name", "Building", "Address", "Size",
+                   "Starting Bid", "Auction Status", "First Seen", "Last Seen"]
         def row_values(row):
             return [
-                row.get("name",""),     row.get("building",""),
-                row.get("address",""),  row.get("size",""),
-                row.get("price",""),    row.get("auction_date",""),
-                row.get("brokers",""),  row.get("first_seen",""),
-                row.get("last_seen",""),
+                row.get("name",""),         row.get("building",""),
+                row.get("address",""),      row.get("size",""),
+                row.get("price",""),        row.get("auction_date",""),
+                row.get("first_seen",""),   row.get("last_seen",""),
             ]
     else:
         col_widths = COL_WIDTHS
         headers    = HEADERS
         def row_values(row):
             return [
-                row.get("name",""),    row.get("building",""),
-                row.get("address",""), row.get("size",""),
-                row.get("price",""),   row.get("brokers",""),
+                row.get("name",""),       row.get("building",""),
+                row.get("address",""),    row.get("size",""),
+                row.get("price",""),      row.get("brokers",""),
                 row.get("first_seen",""), row.get("last_seen",""),
             ]
 
@@ -876,7 +916,7 @@ def save_xlsx(rows: dict[str, dict], path: str, country: str, listing_type: str 
 
 
 def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_type: str = "For Lease") -> dict:
-    today   = str(date.today())
+    today   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     updated = dict(existing)
 
     print(f"\n[COMPARE] {country}")
@@ -886,7 +926,7 @@ def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_
             continue
 
         if k not in updated:
-            fn = FIELDNAMES_SALE if listing_type == "For Sale" else FIELDNAMES
+            fn = FIELDNAMES_SALE if (listing_type == "For Sale" and country == "USA") else FIELDNAMES
             new_row = {f: item.get(f,"") for f in fn}
             new_row["first_seen"] = today
             new_row["last_seen"]  = today
@@ -896,7 +936,7 @@ def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_
         else:
             row     = updated[k]
             changes = []
-            track = TRACK_SALE if listing_type == "For Sale" else TRACK
+            track = TRACK_SALE if (listing_type == "For Sale" and country == "USA") else TRACK
             for field in track:
                 old, new = row.get(field,""), item.get(field,"")
                 if old != new:
@@ -919,6 +959,160 @@ def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_
 # ─────────────────────────────────────────────
 # STATUS HELPER
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# GOOGLE SHEETS UPLOAD
+# ─────────────────────────────────────────────
+
+def get_gspread_client():
+    """
+    Returns an authorised gspread client.
+    First run: opens browser for OAuth consent → saves token.
+    Subsequent runs: uses saved token silently.
+    """
+    import gspread
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
+    import os
+
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive.file",
+    ]
+
+    creds = None
+
+    # Load saved token if it exists
+    if os.path.exists(TOKEN_FILE):
+        try:
+            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+        except Exception as e:
+            print(f"[Sheets] Token load error: {e} — re-authenticating")
+            creds = None
+
+    # If no valid token, run OAuth flow (opens browser once)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+                print("[Sheets] ✓ Token refreshed silently")
+            except Exception:
+                creds = None
+
+        if not creds or not creds.valid:
+            print("[Sheets] Opening browser for Google login …")
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET, SCOPES)
+            creds = flow.run_local_server(port=0, open_browser=True)
+            print("[Sheets] ✓ Authenticated")
+
+        # Save token for future runs
+        with open(TOKEN_FILE, "w") as f:
+            f.write(creds.to_json())
+        print(f"[Sheets] Token saved → {TOKEN_FILE}")
+
+    # Use gspread.Client directly with credentials (works with all gspread versions)
+    return gspread.Client(auth=creds)
+
+
+def upload_to_gsheets(rows: dict, country: str, listing_type: str):
+    """
+    Uploads/updates a worksheet tab in the Google Sheet.
+    Tab name = e.g. "USA - For Lease" or "France - For Sale"
+    Overwrites the entire tab with fresh data each run.
+    """
+    if not UPLOAD_TO_SHEETS:
+        return
+
+    if not Path(CLIENT_SECRET).exists():
+        print(f"[Sheets] ⚠  {CLIENT_SECRET} not found — skipping upload")
+        print(f"[Sheets]    Download it from Google Cloud Console → Credentials")
+        return
+
+    sheet_id = load_sheet_id()
+    if not sheet_id:
+        print(f"[Sheets] ⚠  No spreadsheet_id in {CLIENT_SECRET} — skipping upload")
+        print(f'[Sheets]    Add  "spreadsheet_id": "your-id-here"  to {CLIENT_SECRET}')
+        return
+
+    try:
+        print(f"[Sheets] Connecting to Google Sheets …")
+        gc = get_gspread_client()
+        sh = gc.open_by_key(sheet_id)
+
+        tab_name = f"{country} - {listing_type}"
+
+        # Get or create the worksheet tab
+        try:
+            ws = sh.worksheet(tab_name)
+            ws.clear()
+        except Exception:
+            ws = sh.add_worksheet(title=tab_name, rows=2000, cols=20)
+
+        # Build header + data rows
+        is_usa_auction = (listing_type == "For Sale" and country == "USA")
+
+        if is_usa_auction:
+            headers = ["Name", "Building", "Address", "Size",
+                       "Starting Bid", "Auction Status", "First Seen", "Last Seen"]
+            def make_row(r):
+                return [r.get("name",""), r.get("building",""), r.get("address",""),
+                        r.get("size",""), r.get("price",""), r.get("auction_date",""),
+                        r.get("first_seen",""), r.get("last_seen","")]
+        else:
+            headers = ["Name", "Building", "Address", "Size",
+                       "Price", "Brokers", "First Seen", "Last Seen"]
+            def make_row(r):
+                return [r.get("name",""), r.get("building",""), r.get("address",""),
+                        r.get("size",""), r.get("price",""), r.get("brokers",""),
+                        r.get("first_seen",""), r.get("last_seen","")]
+
+        data = [headers] + [make_row(r) for r in rows.values()
+                            if not r.get("name","").startswith("_")]
+
+        if not data or len(data) < 2:
+            print(f"[Sheets] ⚠  No data to upload")
+            return
+
+        print(f"[Sheets] Uploading {len(data)-1} rows to '{tab_name}' …")
+
+        # Calculate range e.g. "A1:H61"
+        num_cols  = len(headers)
+        num_rows  = len(data)
+        col_letter = chr(ord("A") + num_cols - 1)
+        cell_range = f"A1:{col_letter}{num_rows}"
+
+        # gspread 5.x+: update(range, data, value_input_option)
+        # gspread 6.x+: update(range_name=, values=)
+        # Use try/except to handle both API versions
+        try:
+            ws.update(range_name=cell_range, values=data,
+                      value_input_option="USER_ENTERED")
+        except TypeError:
+            try:
+                ws.update(cell_range, data, value_input_option="USER_ENTERED")
+            except TypeError:
+                ws.update(cell_range, data)
+
+        # Bold + colour the header row
+        try:
+            ws.format(f"A1:{col_letter}1", {
+                "textFormat": {"bold": True, "foregroundColor": {"red":1,"green":1,"blue":1}},
+                "backgroundColor": {"red": 0.122, "green": 0.220, "blue": 0.392}
+            })
+        except Exception:
+            pass   # formatting is cosmetic — don't fail if it errors
+
+        print(f"[Sheets] ✓ '{tab_name}' updated — {len(data)-1} rows")
+        print(f"[Sheets]   https://docs.google.com/spreadsheets/d/{sheet_id}")
+
+    except Exception as e:
+        import traceback
+        print(f"[Sheets] ⚠  Upload failed: {e}")
+        print(f"[Sheets]    Full error:")
+        traceback.print_exc()
+        print(f"[Sheets]    Data is saved locally in the .xlsx file")
+
+
 def set_status(ui: dict, msg: str):
     root = ui.get("_root")
     sv   = ui.get("_status_var")
@@ -947,6 +1141,9 @@ async def run(country: str, listing_type: str, ui: dict):
     updated  = merge_and_report(existing, scraped, country, listing_type)
     save_xlsx(updated, path, country, listing_type)
     print(f"\n[Excel] ✓ {path}  ({len(updated)} total rows)")
+
+    set_status(ui, "☁️  Uploading to Google Sheets …")
+    upload_to_gsheets(updated, country, listing_type)
 
     total_pages = ui.get("_pages", TOTAL_PAGES)
     set_status(ui, f"✅  Done — {len(scraped)} listings ({total_pages} pages) → {path}   |   Pick another country!")
