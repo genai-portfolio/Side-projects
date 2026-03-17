@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>{{ game.goals.title }}</title><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/></head>
+<body><div class="app-shell">
+<header class="app-header"><div><h1>{{ game.goals.title }}</h1><p class="subtitle">{{ game.goals.subtitle }}</p></div><div class="badge">GAME · Goals · Actions · Memory · Environment</div></header>
+<main class="layout">
+  <section class="panel panel-main">
+    <div class="reminder-area">
+      <div class="reminder-icon">⏰</div>
+      <form id="set-form" class="set-form"><input id="minutes-input" type="number" min="1" max="120" placeholder="Min" style="width:70px"/><input id="task-input" type="text" placeholder="Task description…" autocomplete="off"/><button class="btn btn-primary" type="submit">Set Reminder</button></form>
+      <p id="set-feedback" class="feedback"></p>
+      <h2>Active Reminders</h2>
+      <div id="active-list" class="active-list"></div>
+    </div>
+  </section>
+  <section class="panel panel-side">
+    <div class="goals-card"><h2>Rules</h2><ul>{% for r in game.goals.rules %}<li>{{ r }}</li>{% endfor %}</ul></div>
+    <div class="stats-card"><h2>Stats</h2><div id="stats" class="stats-summary"></div></div>
+    <div class="logs-card"><h2>Completed</h2><div id="history" class="recent-logs"></div></div>
+  </section>
+</main></div>
+<script>window.__INITIAL_GAME__={{ game | tojson }};</script><script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ game.goals.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>{{ game.goals.title }}</h1>
+          <p class="subtitle">{{ game.goals.subtitle }}</p>
+        </div>
+        <div class="badge">GAME · Goals · Actions · Memory · Environment</div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-main">
+          <div class="wheel-section">
+            <div class="wheel-wrapper">
+              <div id="wheel" class="wheel">
+                <div class="wheel-inner-shadow"></div>
+                <div class="wheel-center">
+                  <span>SPIN</span>
+                </div>
+              </div>
+              <div class="pointer"></div>
+            </div>
+
+            <div class="controls">
+              <button id="spin-btn" class="btn btn-primary">
+                Spin the wheel
+              </button>
+              <div id="spin-status" class="spin-status"></div>
+            </div>
+
+            <div class="current-task">
+              <h2>Current pick</h2>
+              <p id="current-task" class="current-task-text">
+                Click spin to get a 10-minute challenge.
+              </p>
+              <div class="completion-buttons">
+                <button
+                  class="btn btn-ghost"
+                  data-response="yes"
+                  id="btn-done"
+                  disabled
+                >
+                  I did it
+                </button>
+                <button
+                  class="btn btn-ghost"
+                  data-response="skip"
+                  id="btn-skip"
+                  disabled
+                >
+                  I skipped
+                </button>
+              </div>
+              <p id="completion-feedback" class="completion-feedback"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel panel-side">
+          <div class="goals-card">
+            <h2>Goals & rules</h2>
+            <ul>
+              {% for rule in game.goals.rules %}
+              <li>{{ rule }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="tasks-card">
+            <div class="tasks-header">
+              <h2>Tasks</h2>
+              <span id="tasks-count" class="pill"></span>
+            </div>
+
+            <div id="tasks-list" class="tasks-list"></div>
+
+            <form id="add-task-form" class="add-task-form">
+              <label for="new-task-input">Add a new task</label>
+              <div class="add-task-row">
+                <input
+                  id="new-task-input"
+                  type="text"
+                  placeholder="e.g. Review yesterday's code for 10 minutes"
+                  autocomplete="off"
+                />
+                <button class="btn btn-small" type="submit">Add</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="stats-card">
+            <h2>Stats</h2>
+            <div id="stats-summary" class="stats-summary"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.__INITIAL_GAME__ = {{ game | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+  </html>
+

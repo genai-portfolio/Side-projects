@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>{{ game.goals.title }}</title><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/></head>
+<body><div class="app-shell">
+<header class="app-header"><div><h1>{{ game.goals.title }}</h1><p class="subtitle">{{ game.goals.subtitle }}</p></div><div class="badge">GAME · Goals · Actions · Memory · Environment</div></header>
+<main class="layout">
+  <section class="panel panel-main">
+    <form id="ticket-form" class="ticket-form">
+      <div class="field"><label>Question</label><input id="f-q" placeholder="What do you need help with?" autocomplete="off"/></div>
+      <div class="field"><label>Topic</label><input id="f-topic" placeholder="e.g. Python, SQL, Algorithms" autocomplete="off"/></div>
+      <div class="field"><label>What I Tried</label><textarea id="f-tried" rows="2" placeholder="Describe what you already tried…"></textarea></div>
+      <div class="field-row"><div class="field"><label>Expected</label><input id="f-expected" placeholder="What should happen?"/></div><div class="field"><label>Actual</label><input id="f-actual" placeholder="What actually happens?"/></div></div>
+      <div class="field"><label>Urgency</label>
+        <div class="urgency-btns" id="urgency-btns"><button type="button" class="urg-btn" data-u="low">Low</button><button type="button" class="urg-btn selected" data-u="medium">Medium</button><button type="button" class="urg-btn" data-u="high">High</button></div>
+      </div>
+      <button class="btn btn-primary" type="submit">Create Ticket 🎫</button>
+    </form>
+    <div id="ticket-card" class="ticket-card hidden"><pre id="ticket-text"></pre><button id="copy-btn" class="btn btn-ghost">Copy to Clipboard 📋</button></div>
+  </section>
+  <section class="panel panel-side">
+    <div class="goals-card"><h2>Rules</h2><ul>{% for r in game.goals.rules %}<li>{{ r }}</li>{% endfor %}</ul></div>
+    <div class="stats-card"><h2>Stats</h2><div id="stats" class="stats-summary"></div></div>
+    <div class="logs-card"><h2>Recent Tickets</h2><div id="history" class="recent-logs"></div></div>
+  </section>
+</main></div>
+<script>window.__INITIAL_GAME__={{ game | tojson }};</script><script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

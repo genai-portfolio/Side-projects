@@ -1,0 +1,65 @@
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;font-family:"Inter",system-ui,sans-serif;color:#f9fafb;background:radial-gradient(circle at top,#1f2937 0,#020617 55%,#000 100%)}
+body{display:flex;align-items:stretch;justify-content:center}
+.app-shell{width:100%;max-width:1200px;padding:24px 20px 32px;display:flex;flex-direction:column;gap:20px}
+.app-header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.app-header h1{margin:0;font-size:1.7rem;letter-spacing:.02em}
+.subtitle{margin:6px 0 0;font-size:.95rem;color:#9ca3af}
+.badge{padding:6px 12px;border-radius:999px;border:1px solid rgba(34,197,94,.4);background:linear-gradient(135deg,rgba(34,197,94,.25),rgba(22,101,52,.25));font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:#bbf7d0}
+
+.layout{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1.4fr);gap:18px;align-items:flex-start}
+.panel{background:radial-gradient(circle at top left,#111827,#020617);border-radius:20px;border:1px solid rgba(156,163,175,.25);box-shadow:0 24px 60px rgba(15,23,42,.8);padding:18px 18px 20px}
+.panel-main{min-height:360px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.panel-side{display:flex;flex-direction:column;gap:14px}
+
+/* Streak Hero */
+.streak-hero{text-align:center;padding:20px 0 10px}
+.flame{font-size:3.5rem;animation:flicker 1.2s ease-in-out infinite alternate}
+@keyframes flicker{0%{transform:scale(1) rotate(-3deg)}100%{transform:scale(1.1) rotate(3deg)}}
+.streak-number{font-size:3.5rem;font-weight:700;color:#22c55e;margin:-6px 0 0}
+.streak-label{font-size:.95rem;color:#9ca3af}
+
+/* Calendar */
+.calendar-section{width:100%;max-width:520px}
+.calendar-section h2{margin:0 0 8px;font-size:.95rem;color:#e5e7eb}
+.calendar-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.cal-day{aspect-ratio:1;border-radius:4px;background:rgba(31,41,55,.7);position:relative;cursor:default;transition:transform .15s}
+.cal-day.active{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 0 8px rgba(34,197,94,.5)}
+.cal-day:hover{transform:scale(1.15)}
+.cal-day .tooltip{display:none;position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:#1f2937;color:#e5e7eb;font-size:.65rem;padding:2px 6px;border-radius:4px;white-space:nowrap;z-index:10}
+.cal-day:hover .tooltip{display:block}
+
+/* Log Form */
+.log-form{width:100%;max-width:520px}
+.log-form label{font-size:.85rem;color:#9ca3af;display:block;margin-bottom:4px}
+.log-row{display:flex;gap:8px}
+.log-row input{flex:1;border-radius:999px;border:1px solid rgba(55,65,81,.9);background:rgba(15,23,42,.98);padding:9px 14px;font-size:.85rem;color:#e5e7eb}
+.log-row input::placeholder{color:#6b7280}
+.log-row input:focus{outline:none;border-color:#22c55e;box-shadow:0 0 0 1px #16a34a}
+.log-feedback{font-size:.85rem;color:#bbf7d0;margin:0;min-height:20px;text-align:center}
+.milestone-msg{font-size:1rem;color:#fde68a;margin:0;text-align:center;min-height:22px;font-weight:600}
+
+/* Buttons */
+.btn{border:none;border-radius:999px;padding:9px 18px;font-size:.9rem;font-weight:500;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+.btn-primary{background:linear-gradient(135deg,#22c55e,#16a34a);color:#022c22;box-shadow:0 12px 30px rgba(34,197,94,.35);font-weight:600}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 45px rgba(34,197,94,.5)}
+
+/* Side Cards */
+.goals-card,.stats-card,.logs-card{padding:12px 14px;border-radius:14px;background:radial-gradient(circle at top left,#020617,#020617);border:1px solid rgba(55,65,81,.9)}
+.goals-card h2,.stats-card h2,.logs-card h2{margin:0 0 8px;font-size:.95rem}
+.goals-card ul{list-style:none;padding:0;margin:0;font-size:.85rem;color:#9ca3af}
+.goals-card li{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px}
+.goals-card li::before{content:"•";color:#22c55e;margin-top:1px}
+.stats-summary{display:flex;flex-wrap:wrap;gap:8px}
+.stat{flex:1 1 45%;padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.95);border:1px solid rgba(55,65,81,.9)}
+.stat-label{font-size:.75rem;color:#9ca3af}
+.stat-value{font-size:.95rem;margin-top:2px;color:#e5e7eb}
+
+/* Recent Logs */
+.recent-logs{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.log-entry{padding:6px 8px;border-radius:8px;background:rgba(15,23,42,.9);border:1px solid rgba(31,41,55,.9);font-size:.8rem}
+.log-entry-date{color:#22c55e;font-weight:600;margin-right:6px}
+.log-entry-text{color:#e5e7eb}
+
+@media(max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.panel{padding:14px 12px 16px}.app-header{flex-direction:column;align-items:flex-start}.badge{align-self:stretch;text-align:center}}
+@media(max-width:600px){.app-shell{padding-inline:10px}.panel-main{min-height:0}.calendar-grid{grid-template-columns:repeat(6,1fr)}}

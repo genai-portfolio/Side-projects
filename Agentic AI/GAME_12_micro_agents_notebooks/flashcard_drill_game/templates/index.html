@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><title>{{ game.goals.title }}</title><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/></head>
+<body><div class="app-shell">
+  <header class="app-header"><div><h1>{{ game.goals.title }}</h1><p class="subtitle">{{ game.goals.subtitle }}</p></div><div class="badge">GAME · Goals · Actions · Memory · Environment</div></header>
+  <main class="layout">
+    <section class="panel panel-main">
+      <div class="card-area">
+        <div id="flashcard" class="flashcard">
+          <div class="card-front" id="card-front"><p class="card-label">Question</p><p id="card-q" class="card-text">Click "Draw Card" to start</p></div>
+          <div class="card-back" id="card-back"><p class="card-label">Answer</p><p id="card-a" class="card-text"></p></div>
+        </div>
+        <div class="card-controls">
+          <button id="draw-btn" class="btn btn-primary">Draw Card</button>
+          <button id="flip-btn" class="btn btn-ghost" disabled>Flip</button>
+        </div>
+        <div id="rating-bar" class="rating-bar hidden">
+          <button class="btn btn-easy" data-r="easy">Easy 🟢</button>
+          <button class="btn btn-medium" data-r="medium">Medium 🟡</button>
+          <button class="btn btn-hard" data-r="hard">Hard 🔴</button>
+        </div>
+        <p id="card-feedback" class="card-feedback"></p>
+      </div>
+      <form id="add-form" class="add-form">
+        <h3>Add a Card</h3>
+        <input id="new-q" placeholder="Question" autocomplete="off"/><input id="new-a" placeholder="Answer" autocomplete="off"/>
+        <button class="btn btn-small" type="submit">Add</button>
+      </form>
+    </section>
+    <section class="panel panel-side">
+      <div class="goals-card"><h2>Rules</h2><ul>{% for r in game.goals.rules %}<li>{{ r }}</li>{% endfor %}</ul></div>
+      <div class="stats-card"><h2>Stats</h2><div id="stats" class="stats-summary"></div></div>
+      <div class="cards-list-card"><h2>All Cards</h2><div id="cards-list" class="cards-list"></div></div>
+    </section>
+  </main>
+</div>
+<script>window.__INITIAL_GAME__={{ game | tojson }};</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

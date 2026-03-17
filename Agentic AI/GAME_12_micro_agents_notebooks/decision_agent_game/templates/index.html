@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>{{ game.goals.title }}</title><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/></head>
+<body><div class="app-shell">
+<header class="app-header"><div><h1>{{ game.goals.title }}</h1><p class="subtitle">{{ game.goals.subtitle }}</p></div><div class="badge">GAME · Goals · Actions · Memory · Environment</div></header>
+<main class="layout">
+  <section class="panel panel-main">
+    <form id="decide-form" class="decide-form">
+      <div class="options-row"><div class="option-col"><label>Option A</label><input id="opt-a" placeholder="e.g. Study React"/></div><div class="option-col"><label>Option B</label><input id="opt-b" placeholder="e.g. Study Vue"/></div></div>
+      <div class="scores-grid">
+        <div></div><div class="col-header">Option A</div><div class="col-header">Option B</div>
+        <div class="criteria-label">Time (1-10)</div><input id="sa-time" type="number" min="1" max="10" value="5"/><input id="sb-time" type="number" min="1" max="10" value="5"/>
+        <div class="criteria-label">Difficulty (1-10)</div><input id="sa-diff" type="number" min="1" max="10" value="5"/><input id="sb-diff" type="number" min="1" max="10" value="5"/>
+        <div class="criteria-label">Impact (1-10)</div><input id="sa-impact" type="number" min="1" max="10" value="5"/><input id="sb-impact" type="number" min="1" max="10" value="5"/>
+      </div>
+      <button class="btn btn-primary" type="submit">Compare ⚖️</button>
+    </form>
+    <div id="result-card" class="result-card hidden"><div class="result-winner" id="winner"></div><div class="result-scores" id="scores-bar"></div></div>
+  </section>
+  <section class="panel panel-side">
+    <div class="goals-card"><h2>Rules</h2><ul>{% for r in game.goals.rules %}<li>{{ r }}</li>{% endfor %}</ul></div>
+    <div class="stats-card"><h2>Stats</h2><div id="stats" class="stats-summary"></div></div>
+    <div class="logs-card"><h2>Past Decisions</h2><div id="history" class="recent-logs"></div></div>
+  </section>
+</main></div>
+<script>window.__INITIAL_GAME__={{ game | tojson }};</script><script src="{{ url_for('static', filename='app.js') }}"></script></body></html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ game.goals.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>{{ game.goals.title }}</h1>
+          <p class="subtitle">{{ game.goals.subtitle }}</p>
+        </div>
+        <div class="badge">GAME · Goals · Actions · Memory · Environment</div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-main">
+          <div class="streak-hero">
+            <div class="flame" id="flame">🔥</div>
+            <div class="streak-number" id="streak-number">0</div>
+            <div class="streak-label">day streak</div>
+          </div>
+
+          <div class="calendar-section">
+            <h2>Last 30 Days</h2>
+            <div id="calendar" class="calendar-grid"></div>
+          </div>
+
+          <form id="log-form" class="log-form">
+            <label for="log-input">What did you study today?</label>
+            <div class="log-row">
+              <input id="log-input" type="text" placeholder="e.g. 20 mins arrays & linked lists" autocomplete="off" />
+              <button class="btn btn-primary" type="submit">Log</button>
+            </div>
+          </form>
+          <p id="log-feedback" class="log-feedback"></p>
+          <p id="milestone-msg" class="milestone-msg"></p>
+        </section>
+
+        <section class="panel panel-side">
+          <div class="goals-card">
+            <h2>Goals & Rules</h2>
+            <ul>
+              {% for rule in game.goals.rules %}
+              <li>{{ rule }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="stats-card">
+            <h2>Stats</h2>
+            <div id="stats-summary" class="stats-summary"></div>
+          </div>
+
+          <div class="logs-card">
+            <h2>Recent Logs</h2>
+            <div id="recent-logs" class="recent-logs"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.__INITIAL_GAME__ = {{ game | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

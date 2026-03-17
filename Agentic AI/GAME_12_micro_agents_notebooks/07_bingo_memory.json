@@ -1,0 +1,25 @@
+{
+  "grid": [
+    "Mutating list while iterating",
+    "Wrong base case",
+    "Uninitialized variable",
+    "Wrong loop condition",
+    "Wrong index",
+    "Off-by-one",
+    "Variable shadowing",
+    "Type mismatch",
+    "Infinite loop"
+  ],
+  "marked": [
+    5,
+    6,
+    3,
+    2,
+    1,
+    4,
+    8,
+    9,
+    7
+  ],
+  "wins": 13
+}

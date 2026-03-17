@@ -1,0 +1,32 @@
+{
+  "tasks": [
+    "Revise last lecture notes",
+    "Solve 2 easy problems",
+    "Rewrite one concept in your own words",
+    "Make 5 flashcards",
+    "Refactor one function name + variables",
+    "Watch one short explanation video (max 10 min)",
+    "Teach the concept to an imaginary friend"
+  ],
+  "favorites": [],
+  "hated": [],
+  "picks": {
+    "Teach the concept to an imaginary friend": 2,
+    "Refactor one function name + variables": 1,
+    "Solve 2 easy problems": 1
+  },
+  "stats": {
+    "completed": {
+      "Teach the concept to an imaginary friend": 11,
+      "Solve 2 easy problems": 1
+    },
+    "skipped": {
+      "Teach the concept to an imaginary friend": 3,
+      "Solve 2 easy problems": 4
+    }
+  },
+  "last_spin": {
+    "task": "Solve 2 easy problems",
+    "count": 1
+  }
+}

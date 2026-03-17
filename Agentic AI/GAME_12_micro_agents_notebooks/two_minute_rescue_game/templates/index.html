@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ game.goals.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>{{ game.goals.title }}</h1>
+          <p class="subtitle">{{ game.goals.subtitle }}</p>
+        </div>
+        <div class="badge">GAME · Goals · Actions · Memory · Environment</div>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-main">
+          <div class="rescue-section">
+            <div class="rescue-hero">
+              <div class="rescue-icon">🚑</div>
+              <button id="pick-btn" class="btn btn-primary">Get a Rescue Script</button>
+              <p id="pick-status" class="pick-status"></p>
+            </div>
+
+            <div id="script-card" class="script-card hidden">
+              <h2 id="script-name" class="script-name"></h2>
+              <ol id="script-steps" class="script-steps"></ol>
+              <p class="feedback-prompt">Did this script help?</p>
+              <div class="feedback-buttons">
+                <button id="btn-yes" class="btn btn-success" disabled>Yes, it helped! ✅</button>
+                <button id="btn-no" class="btn btn-ghost" disabled>Not this time 🔄</button>
+              </div>
+              <p id="feedback-msg" class="feedback-msg"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel panel-side">
+          <div class="goals-card">
+            <h2>Goals & Rules</h2>
+            <ul>
+              {% for rule in game.goals.rules %}
+              <li>{{ rule }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="scripts-card">
+            <h2>Rescue Scripts</h2>
+            <div id="scripts-list" class="scripts-list"></div>
+          </div>
+
+          <div class="stats-card">
+            <h2>Stats</h2>
+            <div id="stats-summary" class="stats-summary"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.__INITIAL_GAME__ = {{ game | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
