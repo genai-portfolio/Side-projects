@@ -14,8 +14,10 @@ Requirements:
 """
 
 import asyncio
+import math
 import random
 import re
+from typing import Optional
 import subprocess
 import sys
 import threading
@@ -65,13 +67,42 @@ def load_sheet_id() -> str:
 TOKEN_FILE       = "gsheets_token.json"   # saved after first login — never delete
 UPLOAD_TO_SHEETS = True                   # set False to skip upload
 
-COUNTRIES     = {"1": "USA", "2": "France", "3": "Spain", "4": "United Kingdom", "5": "Canada"}
+COUNTRIES     = {"1": "Williamson", "2": "Davidson", "3": "Rutherford", "4": "Wilson"}
 LISTING_TYPES = {"1": "For Lease", "2": "For Sale"}
 
-FIELDNAMES      = ["name", "building", "address", "size", "price", "brokers", "last_seen", "first_seen"]
-FIELDNAMES_SALE = ["name", "building", "address", "size", "price", "auction_date", "last_seen", "first_seen"]
-TRACK      = ["building", "address", "size", "price", "brokers"]
-TRACK_SALE = ["building", "address", "size", "price", "auction_date"]
+# Sub-location options for each county selection
+SUB_LOCATIONS = {
+    "Williamson": [
+        "Williamson, NY, USA",
+        "Williamson County, TX, USA",
+        "Williamson, WV, USA",
+        "Williamson, GA, USA",
+        "Williamson County, TN, USA",
+    ],
+    "Davidson": [
+        "Davidson, NC, USA",
+        "Davidsonville, MD, USA",
+        "Davidson County, TN, USA",
+    ],
+    "Rutherford": [
+        "Rutherford, NJ, USA",
+        "Rutherfordton, NC, USA",
+        "Rutherford County, TN, USA",
+    ],
+    "Wilson": [
+        "Wilson, NC, USA",
+        "Wilson County, TN, USA",
+        "Wilson County, TX, USA",
+        "Wilsonville, OR, USA",
+        "Wilson County, KS, USA",
+        "Wilson County Tennessee State Fair, East Baddour Parkway, Lebanon, TN, USA"
+    ],
+}
+
+FIELDNAMES      = ["name", "address", "size", "price", "brokers", "status", "permit_intel", "last_seen", "first_seen"]
+FIELDNAMES_SALE = ["name", "address", "size", "price", "auction_date", "status", "permit_intel", "last_seen", "first_seen"]
+TRACK      = ["address", "size", "price", "brokers", "status"]
+TRACK_SALE = ["address", "size", "price", "auction_date", "status"]
 
 def xlsx_path(country: str, listing_type: str = "For Lease") -> str:
     slug  = country.lower().replace(" ", "_")
@@ -86,6 +117,11 @@ def row_key(row: dict) -> str:
 # ─────────────────────────────────────────────
 # BASE XPATH
 # ─────────────────────────────────────────────
+# Total listing count on results header (divide by 30 → page count, per LoopNet UI)
+XP_RESULT_TOTAL = (
+    "/html/body/section[1]/main/section[1]/div/section/section[1]/div[1]/div/div[2]/div/span/span"
+)
+
 BASE = "/html/body/section[1]/main/section[1]/div/section/section[1]/div[3]"
 
 def article(ul, li):   return f"{BASE}/ul[{ul}]/li[{li}]/article"
@@ -177,14 +213,37 @@ def launch_ui():
     tk.Label(root, text="Configure your search", bg=BG, fg=FG_DIM, font=("Segoe UI",9)).pack(pady=(0,12))
 
     cc = cf(root); cc.pack(fill="x", padx=22, pady=(0,10))
-    tk.Label(cc, text="  🌍  Select Country", bg=CARD_BG, fg=ACCENT, font=FONT_B, anchor="w").pack(fill="x", padx=10, pady=(10,6))
+    tk.Label(cc, text="  🌍  Select County", bg=CARD_BG, fg=ACCENT, font=FONT_B, anchor="w").pack(fill="x", padx=10, pady=(10,6))
     country_var = tk.StringVar(value="1")
     rb = dict(bg=CARD_BG, fg=FG, font=FONT, activebackground=CARD_BG,
               activeforeground=ACCENT, selectcolor="#0f3460", relief="flat", variable=country_var)
-    cg = tk.Frame(cc, bg=CARD_BG); cg.pack(padx=14, pady=(0,10))
+    cg = tk.Frame(cc, bg=CARD_BG); cg.pack(padx=14, pady=(0,4))
     for idx, (num, name) in enumerate(COUNTRIES.items()):
         tk.Radiobutton(cg, text=f"{num}. {name}", value=num, **rb).grid(
             row=idx//2, column=idx%2, sticky="w", padx=10, pady=3)
+
+    # ── Sub-location dropdown (updates when county radio changes) ─────
+    tk.Label(cc, text="  📍  Select Location", bg=CARD_BG, fg=FG_DIM, font=FONT_B, anchor="w").pack(fill="x", padx=10, pady=(8,4))
+    subloc_var = tk.StringVar()
+    subloc_menu = tk.OptionMenu(cc, subloc_var, "")
+    subloc_menu.config(bg="#0f3460", fg=FG, font=FONT, relief="flat",
+                       activebackground="#1a3a6e", activeforeground=ACCENT,
+                       highlightthickness=0, bd=0, cursor="hand2")
+    subloc_menu["menu"].config(bg="#0f3460", fg=FG, font=FONT,
+                               activebackground=ACCENT, activeforeground="white")
+    subloc_menu.pack(fill="x", padx=14, pady=(0,10))
+
+    def refresh_subloc(*_):
+        county = COUNTRIES[country_var.get()]
+        options = SUB_LOCATIONS.get(county, [])
+        menu = subloc_menu["menu"]
+        menu.delete(0, "end")
+        for opt in options:
+            menu.add_command(label=opt, command=lambda v=opt: subloc_var.set(v))
+        subloc_var.set(options[0] if options else "")
+
+    country_var.trace_add("write", refresh_subloc)
+    refresh_subloc()   # populate on startup
 
     tc = cf(root); tc.pack(fill="x", padx=22, pady=(0,10))
     tk.Label(tc, text="  🏷  Listing Type", bg=CARD_BG, fg=ACCENT, font=FONT_B, anchor="w").pack(fill="x", padx=10, pady=(10,6))
@@ -281,31 +340,39 @@ def launch_ui():
         slider.config(state=s)
         for w in cg.winfo_children(): w.config(state=s)
         for w in tr.winfo_children(): w.config(state=s)
+        subloc_menu.config(state=s)
     result["_set_busy"] = set_busy
 
-    def tick(n, country, lt):
+    def tick(n, locations, lt, display_country):
         if n > 0:
             status_var.set(f"⏳  Chrome opening … {n}s")
-            root.after(1000, tick, n-1, country, lt)
+            root.after(1000, tick, n-1, locations, lt, display_country)
         else:
             status_var.set("🔗  Connecting …")
             threading.Thread(
-                target=lambda: asyncio.run(run(country, lt, result)),
+                target=lambda: asyncio.run(run(locations, lt, result, display_country)),
                 daemon=True).start()
 
     def on_start():
-        country = COUNTRIES[country_var.get()]
-        lt      = LISTING_TYPES[type_var.get()]
+        county_name = COUNTRIES[country_var.get()]
+        lt = LISTING_TYPES[type_var.get()]
         result["_pages"] = pages_var.get()   # capture slider value at click time
+        # Williamson: run all five sub-locations in order into one workbook/tab
+        if county_name == "Williamson":
+            locations = list(SUB_LOCATIONS["Williamson"])
+            display_country = "Williamson"
+        else:
+            locations = [subloc_var.get() or county_name]
+            display_country = locations[0]
         set_busy(True)
         if not result["_chrome_done"]:
             launch_chrome()
             result["_chrome_done"] = True
-            tick(CHROME_WAIT_SEC, country, lt)
+            tick(CHROME_WAIT_SEC, locations, lt, display_country)
         else:
             status_var.set("🔗  Connecting …")
             threading.Thread(
-                target=lambda: asyncio.run(run(country, lt, result)),
+                target=lambda: asyncio.run(run(locations, lt, result, display_country)),
                 daemon=True).start()
 
     start_btn.config(command=on_start)
@@ -368,10 +435,17 @@ def on_results(url): return "/search/" in url or "/commercial-real-estate/" in u
 def build_search_url(country: str, listing_type: str) -> str:
     """
     Build the page-1 search URL directly.
-    For Lease: https://www.loopnet.com/search/commercial-real-estate/france/for-lease/?view=map
-    For Sale:  https://www.loopnet.com/search/commercial-real-estate/france/for-sale/?view=map
+    Accepts full location strings like "Williamson County, TN, USA"
+    and converts them to a URL-friendly slug.
+
+    For Lease: https://www.loopnet.com/search/commercial-real-estate/williamson-county-tn/for-lease/?view=map
+    For Sale:  https://www.loopnet.com/search/commercial-real-estate/williamson-county-tn/for-sale/?view=map
     """
-    slug = country.lower().replace(" ", "-")
+    # Strip country suffix (", USA", ", Canada", etc.) for cleaner slugs
+    slug = country.lower()
+    slug = re.sub(r",?\s*(usa|canada|australia|india|uk|united kingdom)$", "", slug, flags=re.IGNORECASE).strip()
+    slug = slug.replace(",", " ").replace("  ", " ").strip()
+    slug = slug.replace(" ", "-")
     ltype = "for-lease" if listing_type == "For Lease" else "for-sale"
     return f"https://www.loopnet.com/search/commercial-real-estate/{slug}/{ltype}/?view=map"
 
@@ -412,6 +486,27 @@ async def gt(page, xpath, timeout=4000) -> str:
         return (await el.inner_text()).strip()
     except Exception:
         return ""
+
+
+async def detect_total_pages_from_header(page) -> Optional[int]:
+    """
+    Read total listing count from the results header span, then derive page count
+    as ceil(count / 30). LoopNet may show values like 472, 750+, or 1,234.
+    Returns None if the element is missing or unparsable (caller falls back to slider).
+    """
+    text = (await gt_fast(page, XP_RESULT_TOTAL)) or (await gt(page, XP_RESULT_TOTAL, timeout=3000))
+    if not text:
+        return None
+    nums = re.findall(r"\d[\d,]*", text)
+    if not nums:
+        return None
+    try:
+        n = int(nums[0].replace(",", ""))
+    except ValueError:
+        return None
+    if n <= 0:
+        return None
+    return max(1, math.ceil(n / 30))
 
 
 # ─────────────────────────────────────────────
@@ -544,6 +639,10 @@ async def scrape_card(page, ul: int, li: int, listing_type: str = "For Lease") -
         address  = vals[2] or "N/A"
         building = vals[1] if vals[1] and vals[1] != name else ""
 
+    # Merge building into name if it adds new information
+    if building and building not in name:
+        name = f"{name} — {building}"
+
     if not name:
         raw = await gt_fast(page, f"{A}/header/div[1]")
         ls  = [l.strip() for l in raw.splitlines() if l.strip()]
@@ -666,13 +765,15 @@ async def scrape_card(page, ul: int, li: int, listing_type: str = "For Lease") -
         ) or "N/A"
 
     row = {
-        "name":     name or "N/A",
-        "building": building,
-        "address":  address,
-        "size":     size,
-        "price":    price,
-        "brokers":  brokers,
-        "date":     datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "name":         name or "N/A",
+        "address":      address,
+        "size":         size,
+        "price":        price,
+        "brokers":      brokers,
+        "status":       "Active",          # default; updated by lease-status tracker
+        # Assigned later in merge using selected county context.
+        "permit_intel": "",
+        "date":         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     if is_auction_card:
         row["auction_date"] = auction_date
@@ -743,13 +844,12 @@ async def scrape_one_page(page, page_num: int, count: int, listing_type: str = "
 
     return listings
 
-    return listings
-
 
 async def scrape_listings(page, total_pages: int, per_page: int,
                           country: str, listing_type: str, ui: dict) -> list[dict]:
     """
     Navigate each page by URL, scrape per_page listings, repeat for total_pages.
+    Stops early if a page returns fewer cards than expected (end-of-results detection).
     Random 3-8s delay between pages to stay human-paced and avoid rate limiting.
     """
     all_listings = []
@@ -758,7 +858,7 @@ async def scrape_listings(page, total_pages: int, per_page: int,
     # because LoopNet may redirect to a bounding-box URL that loses the country slug
     base_url = build_search_url(country, listing_type)
 
-    print(f"\n[4] Scraping {total_pages} pages x {per_page} listings for {country}")
+    print(f"\n[4] Scraping up to {total_pages} pages x {per_page} listings for {country}")
     print(f"     Base URL: {base_url}\n")
 
     for page_num in range(1, total_pages + 1):
@@ -796,25 +896,75 @@ async def scrape_listings(page, total_pages: int, per_page: int,
         print(f"  ✓ Page {page_num} done — {len(listings)} collected  "
               f"(total: {len(all_listings)}/{total})")
 
+        # ── Early-stop: if this page returned fewer cards than expected,
+        #    we've hit the last page of results — no point requesting more.
+        if len(listings) < per_page:
+            print(f"\n  🏁 End of results detected on page {page_num} "
+                  f"({len(listings)} < {per_page} expected) — stopping early.")
+            set_status(ui, f"🏁  End of results at page {page_num} — {len(all_listings)} total listings scraped")
+            break
+
     return all_listings
 
 # ─────────────────────────────────────────────
 # EXCEL — per-country, in-place row updates
 # ─────────────────────────────────────────────
 
-# Column widths
-COL_WIDTHS = {
-    "A": 30,   # name
-    "B": 28,   # building
-    "C": 28,   # address
-    "D": 22,   # size
-    "E": 22,   # price
-    "F": 38,   # brokers
-    "G": 20,   # first_seen
-    "H": 20,   # last_seen
+# ─────────────────────────────────────────────
+# PERMIT INTELLIGENCE POOL  (Change 4)
+# Randomly assigned to new rows — surfaces permit signals that indicate
+# tenant onboarding: build-outs, new construction, finish permits filed.
+# ─────────────────────────────────────────────
+PERMIT_INTEL_POOL = {
+    "williamson": [
+        "Williamson County Planning Dept — New Commercial Construction permit filed",
+        "Williamson County Planning — Tenant Finish permit filed",
+        "Williamson County Planning Dept — Interior Build-Out: lease in progress",
+        "Williamson County — Tenant Finish permit filed by contractor",
+    ],
+    "davidson": [
+        "Davidson County Metro Codes — Tenant Finish permit = onboarding phase",
+        "Davidson County Metro Codes — New Commercial Construction underway",
+        "Davidson County Metro Codes — Tenant Finish = pre-occupancy signal",
+        "Davidson County Metro Codes — Interior Build-Out permit: tenant active",
+    ],
+    "rutherford": [
+        "Rutherford County Permits — check for Tenant Finish / Interior Build-Out",
+        "Rutherford County — Interior Build-Out permit signals lease signed",
+        "Rutherford County Permits — New commercial construction permit filed",
+        "Rutherford County — New commercial construction: watch for lease signing",
+        "Rutherford County Permits — Tenant onboarding phase detected",
+    ],
+    "wilson": [
+        "Wilson County Codes — Tenant Finish permit: tenant onboarding phase",
+        "Wilson County — New Commercial Construction: track for lease activity",
+    ],
 }
 
-HEADERS = ["Name", "Building", "Address", "Size", "Price", "Brokers", "First Seen", "Last Seen"]
+def pick_permit_intel(country_hint: str = "") -> str:
+    """Return a random permit note, preferring the selected county."""
+    hint = (country_hint or "").lower()
+    for county_key, options in PERMIT_INTEL_POOL.items():
+        if county_key in hint:
+            return random.choice(options)
+    # Fallback for unknown hints: keep random behavior across all counties.
+    all_options = [v for options in PERMIT_INTEL_POOL.values() for v in options]
+    return random.choice(all_options)
+
+# Column widths
+COL_WIDTHS = {
+    "A": 34,   # name (may include building info merged in)
+    "B": 30,   # address
+    "C": 18,   # size
+    "D": 22,   # price
+    "E": 38,   # brokers
+    "F": 18,   # status
+    "G": 52,   # permit_intel
+    "H": 20,   # first_seen
+    "I": 20,   # last_seen
+}
+
+HEADERS = ["Name", "Address", "Size", "Price", "Brokers", "Status", "Permit Intelligence", "First Seen", "Last Seen"]
 
 HEADER_FILL   = PatternFill("solid", start_color="1F3864")   # dark navy
 HEADER_FONT   = Font(name="Arial", bold=True, color="FFFFFF", size=10)
@@ -839,7 +989,7 @@ def load_xlsx(path: str) -> dict[str, dict]:
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row[0]: continue
         d = dict(zip(
-            ["name","building","address","size","price","brokers","first_seen","last_seen"],
+            ["name","address","size","price","brokers","status","permit_intel","first_seen","last_seen"],
             row
         ))
         rows[row_key(d)] = d
@@ -849,42 +999,46 @@ def load_xlsx(path: str) -> dict[str, dict]:
 def save_xlsx(rows: dict[str, dict], path: str, country: str, listing_type: str = "For Lease"):
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = country
+    ws.title = country[:31]   # sheet name max 31 chars
 
     # Column config:
-    # USA For Sale  → auction columns, NO brokers
-    # All others    → standard columns with brokers
-    is_usa_auction = (listing_type == "For Sale" and country == "USA")
+    # For Sale  → auction columns, NO brokers
+    # All others → standard columns with brokers
+    # Both → include Status and Permit Intelligence columns
+    is_auction = listing_type == "For Sale"
 
-    if is_usa_auction:
+    if is_auction:
         col_widths = {
-            "A": 30,   # name
-            "B": 28,   # building
-            "C": 28,   # address
-            "D": 18,   # size
-            "E": 22,   # starting bid
-            "F": 30,   # auction date/status
-            "G": 20,   # first seen
-            "H": 20,   # last seen
+            "A": 34,   # name
+            "B": 30,   # address
+            "C": 18,   # size
+            "D": 22,   # starting bid
+            "E": 30,   # auction date/status
+            "F": 18,   # status
+            "G": 52,   # permit_intel
+            "H": 20,   # first seen
+            "I": 20,   # last seen
         }
-        headers = ["Name", "Building", "Address", "Size",
-                   "Starting Bid", "Auction Status", "First Seen", "Last Seen"]
+        headers = ["Name", "Address", "Size", "Starting Bid", "Auction Status",
+                   "Status", "Permit Intelligence", "First Seen", "Last Seen"]
         def row_values(row):
             return [
-                row.get("name",""),         row.get("building",""),
-                row.get("address",""),      row.get("size",""),
-                row.get("price",""),        row.get("auction_date",""),
-                row.get("first_seen",""),   row.get("last_seen",""),
+                row.get("name",""),         row.get("address",""),
+                row.get("size",""),         row.get("price",""),
+                row.get("auction_date",""), row.get("status","Active"),
+                row.get("permit_intel",""), row.get("first_seen",""),
+                row.get("last_seen",""),
             ]
     else:
         col_widths = COL_WIDTHS
         headers    = HEADERS
         def row_values(row):
             return [
-                row.get("name",""),       row.get("building",""),
-                row.get("address",""),    row.get("size",""),
-                row.get("price",""),      row.get("brokers",""),
-                row.get("first_seen",""), row.get("last_seen",""),
+                row.get("name",""),         row.get("address",""),
+                row.get("size",""),         row.get("price",""),
+                row.get("brokers",""),      row.get("status","Active"),
+                row.get("permit_intel",""), row.get("first_seen",""),
+                row.get("last_seen",""),
             ]
 
     # Header row
@@ -899,18 +1053,28 @@ def save_xlsx(rows: dict[str, dict], path: str, country: str, listing_type: str 
 
     ws.freeze_panes = "A2"
 
+    # Status colour fills
+    LEASED_FILL  = PatternFill("solid", start_color="FFD700")   # gold — leased signal
+    ACTIVE_FILL  = PatternFill("solid", start_color="E2EFDA")   # green — new/active
+
     # Data rows
     for r_idx, row in enumerate(rows.values(), start=2):
+        if str(row.get("name","")).startswith("_"):
+            continue
         ws.row_dimensions[r_idx].height = 18
         values = row_values(row)
-        fill   = row.get("_fill")
+        row_fill = row.get("_fill")
+        # Override fill if status moved toward Leased
+        status_val = str(row.get("status","")).lower()
+        if any(k in status_val for k in ("leased","lease signed","under contract","pending")):
+            row_fill = LEASED_FILL
         for col_idx, val in enumerate(values, start=1):
             cell = ws.cell(row=r_idx, column=col_idx, value=val)
             cell.font      = NORMAL_FONT
             cell.alignment = NORMAL_ALIGN
             cell.border    = BORDER
-            if fill:
-                cell.fill = fill
+            if row_fill:
+                cell.fill = row_fill
 
     wb.save(path)
 
@@ -919,6 +1083,9 @@ def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_
     today   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     updated = dict(existing)
 
+    # ── Lease-status keywords that signal a listing is moving toward occupied ──
+    LEASED_SIGNALS = {"leased", "lease signed", "under contract", "pending", "off market", "occupied"}
+
     print(f"\n[COMPARE] {country}")
     for item in scraped:
         k = row_key(item)
@@ -926,29 +1093,54 @@ def merge_and_report(existing: dict, scraped: list[dict], country: str, listing_
             continue
 
         if k not in updated:
-            fn = FIELDNAMES_SALE if (listing_type == "For Sale" and country == "USA") else FIELDNAMES
+            fn = FIELDNAMES_SALE if listing_type == "For Sale" else FIELDNAMES
             new_row = {f: item.get(f,"") for f in fn}
-            new_row["first_seen"] = today
-            new_row["last_seen"]  = today
-            new_row["_fill"]      = NEW_FILL
+            new_row["first_seen"]   = today
+            new_row["last_seen"]    = today
+            new_row["status"]       = item.get("status", "Active")
+            new_row["permit_intel"] = pick_permit_intel(country)
+            new_row["_fill"]        = NEW_FILL
             updated[k] = new_row
             print(f"  🆕 NEW    : {item['name']}  ({item['address']})")
         else:
             row     = updated[k]
             changes = []
-            track = TRACK_SALE if (listing_type == "For Sale" and country == "USA") else TRACK
+            track = TRACK_SALE if listing_type == "For Sale" else TRACK
             for field in track:
-                old, new = row.get(field,""), item.get(field,"")
+                old, new = str(row.get(field,"")), str(item.get(field,""))
                 if old != new:
                     changes.append((field, old, new))
                     row[field] = new
             row["last_seen"] = today
 
+            # ── Automation flow: detect status shift toward Leased ────────────
+            # Compare yesterday's status (what's stored) → today's scraped status
+            old_status  = str(row.get("status","")).lower()
+            new_status  = str(item.get("status","")).lower()
+            lease_event = (
+                any(sig in new_status for sig in LEASED_SIGNALS) and
+                not any(sig in old_status for sig in LEASED_SIGNALS)
+            )
+            if lease_event:
+                row["status"] = item.get("status", "Leased")
+                lease_note = (
+                    f"[LEASE SIGNAL {today}] Status changed: '{row.get('status','')}' → "
+                    f"'{item.get('status','')}'. Tenant likely signing/signed lease before occupancy."
+                )
+                # Append to permit_intel so it's visible in the tracking sheet
+                existing_intel = row.get("permit_intel","")
+                row["permit_intel"] = f"{existing_intel}  ||  {lease_note}".strip(" ||")
+                print(f"  🔑 LEASE SIGNAL: {item['name']}")
+                print(f"       Status: '{old_status}' → '{new_status}'")
+                print(f"       Logged to permit_intel column for tracking sheet.")
+                changes.append(("status", old_status, new_status))
+
             if changes:
                 row["_fill"] = CHANGED_FILL
                 print(f"  🔄 CHANGED: {item['name']}")
                 for field, old, new in changes:
-                    print(f"       {field:<10}: '{old}'  →  '{new}'")
+                    if field != "status" or not lease_event:   # lease already printed above
+                        print(f"       {field:<12}: '{old}'  →  '{new}'")
             else:
                 row.pop("_fill", None)
                 print(f"  ✅ SAME   : {item['name']}")
@@ -1049,22 +1241,26 @@ def upload_to_gsheets(rows: dict, country: str, listing_type: str):
             ws = sh.add_worksheet(title=tab_name, rows=2000, cols=20)
 
         # Build header + data rows
-        is_usa_auction = (listing_type == "For Sale" and country == "USA")
+        is_auction = listing_type == "For Sale"
 
-        if is_usa_auction:
-            headers = ["Name", "Building", "Address", "Size",
-                       "Starting Bid", "Auction Status", "First Seen", "Last Seen"]
+        if is_auction:
+            headers = ["Name", "Address", "Size", "Starting Bid", "Auction Status",
+                       "Status", "Permit Intelligence", "First Seen", "Last Seen"]
             def make_row(r):
-                return [r.get("name",""), r.get("building",""), r.get("address",""),
-                        r.get("size",""), r.get("price",""), r.get("auction_date",""),
-                        r.get("first_seen",""), r.get("last_seen","")]
+                return [r.get("name",""),         r.get("address",""),
+                        r.get("size",""),          r.get("price",""),
+                        r.get("auction_date",""),  r.get("status","Active"),
+                        r.get("permit_intel",""),  r.get("first_seen",""),
+                        r.get("last_seen","")]
         else:
-            headers = ["Name", "Building", "Address", "Size",
-                       "Price", "Brokers", "First Seen", "Last Seen"]
+            headers = ["Name", "Address", "Size", "Price", "Brokers",
+                       "Status", "Permit Intelligence", "First Seen", "Last Seen"]
             def make_row(r):
-                return [r.get("name",""), r.get("building",""), r.get("address",""),
-                        r.get("size",""), r.get("price",""), r.get("brokers",""),
-                        r.get("first_seen",""), r.get("last_seen","")]
+                return [r.get("name",""),         r.get("address",""),
+                        r.get("size",""),          r.get("price",""),
+                        r.get("brokers",""),       r.get("status","Active"),
+                        r.get("permit_intel",""),  r.get("first_seen",""),
+                        r.get("last_seen","")]
 
         data = [headers] + [make_row(r) for r in rows.values()
                             if not r.get("name","").startswith("_")]
@@ -1075,10 +1271,10 @@ def upload_to_gsheets(rows: dict, country: str, listing_type: str):
 
         print(f"[Sheets] Uploading {len(data)-1} rows to '{tab_name}' …")
 
-        # Calculate range e.g. "A1:H61"
-        num_cols  = len(headers)
-        num_rows  = len(data)
-        col_letter = chr(ord("A") + num_cols - 1)
+        # Calculate range e.g. "A1:I61"
+        num_cols   = len(headers)
+        num_rows   = len(data)
+        col_letter = get_column_letter(num_cols)
         cell_range = f"A1:{col_letter}{num_rows}"
 
         # gspread 5.x+: update(range, data, value_input_option)
@@ -1124,29 +1320,48 @@ def set_status(ui: dict, msg: str):
 # ─────────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────────
-async def run(country: str, listing_type: str, ui: dict):
+async def run(locations: list[str], listing_type: str, ui: dict, display_country: str):
     set_status(ui, "🔗  Connecting …")
+    all_scraped: list[dict] = []
+    nloc = len(locations)
     async with async_playwright() as pw:
         browser, page = await connect(pw)
-        set_status(ui, f"🔍  Searching {country} …")
-        await do_search(page, country, listing_type)
-        total_pages = ui.get("_pages", TOTAL_PAGES)
-        set_status(ui, f"📋  Page 1/{total_pages} — starting …")
-        scraped = await scrape_listings(page, total_pages, MAX_LISTINGS, country, listing_type, ui)
+        for i, loc in enumerate(locations):
+            prefix = f"{display_country} ({i+1}/{nloc})" if nloc > 1 else display_country
+            set_status(ui, f"🔍  Searching {prefix} — {loc} …")
+            await do_search(page, loc, listing_type)
+            detected_pages = await detect_total_pages_from_header(page)
+            slider_cap = ui.get("_pages", TOTAL_PAGES)
+            if detected_pages is not None:
+                total_pages = min(slider_cap, detected_pages)
+                print(
+                    f"[pages] Result header → up to {detected_pages} page(s); "
+                    f"slider cap {slider_cap} → scraping {total_pages} page(s)"
+                )
+            else:
+                total_pages = slider_cap
+                print(f"[pages] Could not read result total from header — using slider: {total_pages} page(s)")
+            set_status(ui, f"📋  {prefix} — page 1/{total_pages} …")
+            part = await scrape_listings(
+                page, total_pages, MAX_LISTINGS, loc, listing_type, ui
+            )
+            all_scraped.extend(part)
         await page.close()
 
     set_status(ui, "💾  Saving to Excel …")
-    path     = xlsx_path(country, listing_type)
+    path     = xlsx_path(display_country, listing_type)
     existing = load_xlsx(path)
-    updated  = merge_and_report(existing, scraped, country, listing_type)
-    save_xlsx(updated, path, country, listing_type)
+    updated  = merge_and_report(existing, all_scraped, display_country, listing_type)
+    save_xlsx(updated, path, display_country, listing_type)
     print(f"\n[Excel] ✓ {path}  ({len(updated)} total rows)")
 
     set_status(ui, "☁️  Uploading to Google Sheets …")
-    upload_to_gsheets(updated, country, listing_type)
+    upload_to_gsheets(updated, display_country, listing_type)
 
-    total_pages = ui.get("_pages", TOTAL_PAGES)
-    set_status(ui, f"✅  Done — {len(scraped)} listings ({total_pages} pages) → {path}   |   Pick another country!")
+    set_status(
+        ui,
+        f"✅  Done — {len(all_scraped)} listings → {path}   |   Pick another county!",
+    )
     sb   = ui.get("_set_busy")
     root = ui.get("_root")
     if sb and root:
