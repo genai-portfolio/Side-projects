@@ -1,3 +1,53 @@
-.venv/
+# ------------------------------
+# Monorepo baseline ignores
+# ------------------------------
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor configs
+.idea/
+.vscode/
+.cursor/
+*.iml
+
+# Node.js / Next.js / Vite
+**/node_modules/
+**/.next/
+**/.nuxt/
+**/dist/
+**/build/
+**/.turbo/
+**/.cache/
+**/coverage/
+**/.eslintcache
+**/*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.ipynb_checkpoints/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.tox/
+**/.nox/
+**/.hypothesis/
+**/.coverage
+**/htmlcov/
+**/site/
+
+# Python virtual environments (recursive)
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+
+# Archives
 *.zip
-__pycache__/
