@@ -1,98 +1,56 @@
-# 🌐 Generative AI Portfolio
+# Side Projects Monorepo
 
-**Muhammad Hamza · Gul Ahmad**
+A multi-project repository that combines AI experiments, automation tools, web development work, client integrations, and general software practice in one place.
 
----
+## Overview
 
-## 👋 Introduction
+This monorepo is designed to:
+- Keep related projects in a single organized workspace
+- Support experimentation across multiple stacks (Python, JavaScript/TypeScript, web frameworks)
+- Encourage reusable patterns for scripts, prototypes, and production-minded apps
 
-Welcome to our **Generative AI Portfolio**.
+## Project Directory
 
-We are **Muhammad Hamza** and **Gul Ahmad**, engineers focused on building, experimenting with, and applying **Generative Artificial Intelligence**. What began as independent side projects has now evolved into our **primary area of interest and professional focus**.
+| Folder Name | Language/Tech | Brief Description |
+| --- | --- | --- |
+| `Agentic AI` | Python, LLM tooling | Agent-style AI experiments, workflows, and prototypes. |
+| `Automation projects` | Python, Selenium, scripting | Browser and task automation scripts for practical workflows. |
+| `Clients` | Python, API integrations | Client-specific integrations and local utility apps. |
+| `Combined projects` | Mixed (Python/JS) | Cross-domain projects that combine multiple ideas or stacks. |
+| `Generative AI (Gul)` | Python, GenAI APIs | Generative AI projects and experiments by Gul. |
+| `Generative AI (Hamza)` | Python, GenAI APIs, notebooks | Generative AI projects, notebook workflows, and model demos by Hamza. |
+| `Graphs and traversals` | Python | Data structure and algorithm practice focused on graph problems. |
+| `Just for fun` | Mixed | Small exploratory projects, coding experiments, and quick builds. |
+| `LangChain` | Python, LangChain | LLM applications using LangChain, embeddings, and retrieval patterns. |
+| `Other than Gen AI` | Python | General Python practice and utility scripts outside GenAI scope. |
+| `Vestra website` | Node.js, Next.js/Vite, web stack | Web application and frontend-focused development work. |
+| `.github` | GitHub Actions, YAML | CI/CD workflows, automation pipelines, and repository automation settings. |
 
-This repository represents our hands-on work with modern AI systems, showcasing both our **technical capabilities** and our **approach to problem-solving** in the GenAI space.
+## Tech Stack
 
----
+- **Python**: AI workflows, automation, APIs, scripting
+- **Node.js / Web**: frontend and web application projects
+- **GitHub Actions**: CI/CD pipelines and automation
+- **Notebooks**: research and iterative experimentation
 
-## 🧠 Areas of Expertise
+## Monorepo Conventions
 
-Our work spans across:
+- Centralized ignore rules in `.gitignore` for Node, Python, IDE, and OS artifacts
+- Project-specific dependencies are managed within each folder
+- CI/CD workflows are defined under `.github/workflows`
 
-* **Generative AI & Large Language Models (LLMs)**
-* **Natural Language Processing (NLP)**
-* **Applied Machine Learning**
-* **AI-driven product prototypes**
-* **Model fine-tuning, evaluation, and experimentation**
+## Getting Started
 
-We focus on creating solutions that balance **innovation, practicality, and scalability**.
+1. Clone the repository
+2. Open your target project folder
+3. Install dependencies for that project stack
+4. Run locally and iterate
 
----
+## Contributors
 
-## 📂 Projects
+- [Muhammad Hamza](https://github.com/Hamzaishappy786)
+- [Gul Ahmad](https://github.com/gull-ahmad-projects)
 
-This portfolio includes a curated set of projects that demonstrate:
+## Status
 
-* End-to-end GenAI workflows
-* Experimental and research-oriented implementations
-* Clean, modular, and well-documented code
-* Practical applications of state-of-the-art AI models
-
-Each project highlights a specific concept, challenge, or real-world use case within Generative AI.
-
----
-
-## 🎯 Our Approach
-
-We believe strong AI systems are built through:
-
-* Clear problem definition
-* Iterative experimentation
-* Ethical and responsible AI practices
-* Continuous learning and refinement
-
-Our work reflects a mindset of **depth over hype** and **impact over noise**.
-
----
-
-## 👥 Contributors
-
-### Muhammad Hamza
-
-* Focus: Generative AI, NLP, model experimentation
-* Interests: LLM fine-tuning, applied AI systems, intelligent automation
-
-### Gul Ahmad
-
-* Focus: Machine Learning, AI experimentation, project development
-* Interests: Applied AI, Fine-tuned AI based systems, scalable ML systems
-
----
-
-## 🚧 Status
-
-* Actively maintained
-* Continuously expanding
-* Intended for professional review and collaboration
-
----
-
-## 🤝 Collaboration & Contact
-
-We welcome:
-
-* Technical discussions
-* Research collaboration
-* Portfolio reviews
-* Opportunities in AI & GenAI domains
-
-Feel free to explore the projects and reach out for collaboration.
-
----
-
-## urls:
-1. Muhammad Hamza -> https://github.com/Hamzaishappy786
-2. Gul Ahmad -> https://github.com/gull-ahmad-projects
-
-Follow us for more projects.
-
-### ✨ *Building intelligent systems with clarity, intent, and curiosity.*
+Active and continuously evolving with new experiments, automation utilities, and production-ready improvements.

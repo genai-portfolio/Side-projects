@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-md mx-auto mt-20">
+    <div class="glass p-8 rounded-3xl shadow-xl">
+        <h2 class="text-3xl font-bold mb-6 text-center">Welcome Back</h2>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <p class="bg-red-100 text-red-600 p-3 rounded-lg text-sm mb-4">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Gmail (Email)</label>
+                    <input type="email" name="email" placeholder="example@gmail.com" required
+                        class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="relative">
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required
+                        class="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary pr-12">
+                    <button type="button" id="togglePassword" class="absolute right-4 top-[38px] text-gray-400 hover:text-primary transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="eyeIcon">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                <button type="submit"
+                    class="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg hover:bg-secondary transition mt-4">Login</button>
+            </div>
+        </form>
+        <p class="text-center mt-6 text-gray-500">New here? <a href="/signup" class="text-primary font-semibold">Sign up</a></p>
+    </div>
+</div>
+
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const eyeIcon = document.querySelector('#eyeIcon');
+
+    togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        if (type === 'text') {
+            eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.025 10.025 0 014.132-5.411m0 0L21 21M9.88 9.88l1.415 1.415M11.963 11.963l1.415 1.415M10.744 10.744l4.137 4.137M9 10.121V10a3 3 0 013-3h.121m0 0L19.5 7.125M18 14v4.75" />
+            `;
+        } else {
+            eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+        }
+    });
+</script>
+{% endblock %}

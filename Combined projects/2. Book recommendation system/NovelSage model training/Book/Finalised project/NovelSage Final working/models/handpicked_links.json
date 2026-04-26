@@ -1,0 +1,164 @@
+[
+    {
+        "title": "All Creatures Great and Small",
+        "isbn": "9781250057839",
+        "link": "https://cdn.bookey.app/files/pdf/book/en/all-creatures-great-and-small.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Under the Black Flag: The Romance and the Reality of Life Among the Pirates",
+        "isbn": "9780812977226",
+        "link": "https://cdn.bookey.app/files/pdf/book/en/under-the-black-flag.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "The Weight of Water",
+        "isbn": "9780312423377",
+        "link": "https://www.researchgate.net/publication/263443686_The_weight_of_water",
+        "xpath": "/html/body/div[2]/div[3]/div[1]/div/div/div[1]/div[2]/div/div/div/div[2]/div[2]/div[2]/div/div[1]/a/span"
+    },
+    {
+        "title": "The Witching Hour (Lives of the Mayfair Witches)",
+        "isbn": "9780345384461",
+        "link": "https://drive.google.com/file/d/1kTnCqDpN-QR9_-xLlPaJEo_Dp329FQNE/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Bonesetter's Daughter",
+        "isbn": "0399146431",
+        "link": "https://drive.google.com/file/d/1OXZCdcwrKShN_1IvpPjROk7u4sAynIRh/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The English Patient",
+        "isbn": "9780679745204",
+        "link": "https://drive.google.com/file/d/1L-RfMVWFAHWbwXWdvYO8PCGx4OZsvwSz/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "Watership Down",
+        "isbn": "9780140039580",
+        "link": "https://drive.google.com/file/d/1RkkkY1BaZ5vMO_vSwJC1vmQX6qCE7_vv/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "Me Talk Pretty One Day",
+        "isbn": "9780316776967",
+        "link": "https://drive.google.com/file/d/1vq3wYrxXKHstspfv7aMDN1p-706sVAD9/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Lovely Bones",
+        "isbn": "9780316666343",
+        "link": "https://avalonlibrary.net/ebooks/Alice%20Sebold%20-%20The%20Lovely%20Bones.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Bridget Jones's Diary",
+        "isbn": "9780140280091",
+        "link": "https://www.kkoworld.com/kitablar/Helen%20Fielding%20-%20Bridget%20Jones%27s%20Diary.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div"
+    },
+    {
+        "title": "The Pelican Brief",
+        "isbn": "9780385421980",
+        "link": "https://drive.google.com/file/d/16-1Es2xuaSAHwb6voAQRgTm6a2upjytu/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "Divine Secrets of the Ya-Ya Sisterhood PDF",
+        "isbn": "9780060173326",
+        "link": "https://drive.google.com/file/d/1CbgOe9IAnbOaVdj9LzEOBHpgN5lB4dd5/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Da Vinci Code",
+        "isbn": "9780385504201",
+        "link": "https://drive.google.com/file/d/1EGMHqnuqUm52GasL3CXqWXp_tGbECSxn/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Nanny Diaries",
+        "isbn": "9780312273187",
+        "link": "https://drive.google.com/file/d/1mdBCuySvrexnrpjOHgqbTfMEfHCfNpAm/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "A Painted House",
+        "isbn": "9780385501201",
+        "link": "https://drive.google.com/file/d/1r4sFkjTy-vYZOFZDjjy9xMMERcsSJE7N/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Testament",
+        "isbn": "0385493800",
+        "link": "https://drive.google.com/file/d/17o-JeMZt2rNSBo3h_5FmUNVr6O7vqTga/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "From the Corner of His Eye",
+        "isbn": "0553801341",
+        "link": "https://drive.google.com/file/d/1XzTiox8yXPgf0-OixvltBvsWbCSuH2_F/view?usp=sharing",
+        "type": "google_drive"
+    },
+    {
+        "title": "The Phantom Tollbooth",
+        "isbn": "0394820371",
+        "link": "https://www.morrisoncenter.com/assets/doc/061318-phantom-tollbooth-study-guide-767faf4b17.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Atonement : A Novel",
+        "isbn": "038572179X",
+        "link": "https://www.junkybooks.com/administrator/thebooks/62fc24fcca1e5-atonement.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Anne Frank: The Diary of a Young Girl",
+        "isbn": "0385480334",
+        "link": "https://www.docdroid.net/N8uGQ0o/anne-frank-the-diary-of-a-young-girl-pdf",
+        "xpath": "/html/body/div[1]/div/div/div[1]/header/div/div[3]/div/a"
+    },
+    {
+        "title": "Like Water for Chocolate : A Novel in Monthly Installments with Recipes, Romances, and Home Remedies",
+        "isbn": "038542017X",
+        "link": "https://cdn.bookey.app/files/pdf/book/en/like-water-for-chocolate.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "The Catcher in the Rye",
+        "isbn": "0316769487",
+        "link": "https://msweinfurter.weebly.com/uploads/5/4/3/7/5437316/catcher_in_the_rye_pdf.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Where the Red Fern Grows",
+        "isbn": "0553274295",
+        "link": "https://mrparratore.weebly.com/uploads/1/1/0/0/110095453/where_the_red_fern_grows_book_website.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "The Bridges of Madison County",
+        "isbn": "0446516481",
+        "link": "https://books-library.website/files/books-library.online-01080840Ul4O9.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "the street lawyer",
+        "isbn": "0385339091",
+        "link": "https://learnenglish-new.com/wp-content/uploads/2022/04/The-Street-Lawyer-By-John-Grisham-Retold-by-Michael-Dean-Book-PDF.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "Along Came a Spider",
+        "isbn": "0446364134",
+        "link": "https://readerslibrary.org/wp-content/uploads/Along-came-a-Spider.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div/cr-icon"
+    },
+    {
+        "title": "The Bad Beginning (A Series of Unfortunate Events, Book 1)",
+        "isbn": "0064407667",
+        "link": "https://www.learnwithliann.com/wp-content/uploads/2024/04/A-Series-of-Unfortunate-Events-1-The-Bad-Beginning-Full-Book.pdf",
+        "xpath": "/html/body/pdf-viewer//viewer-toolbar//div/div[3]/viewer-download-controls//cr-icon-button//div"
+    }
+]

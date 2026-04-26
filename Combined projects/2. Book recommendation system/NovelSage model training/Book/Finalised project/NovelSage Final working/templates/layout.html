@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelSage AI - Your Literary Expert</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        primary: { DEFAULT: '#6366f1', glow: 'rgba(99, 102, 241, 0.3)' },
+                        secondary: '#a855f7', darkBg: '#020617', darkCard: '#0f172a'
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        pulseGlow: { '0%, 100%': { opacity: '0.4', transform: 'scale(1)' }, '50%': { opacity: '0.8', transform: 'scale(1.05)' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root { --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(255, 255, 255, 0.2); }
+        .dark { --glass-bg: rgba(15, 23, 42, 0.6); --glass-border: rgba(255, 255, 255, 0.05); }
+        .glass { background: var(--glass-bg); backdrop-filter: blur(12px) saturate(180%); border: 1px solid var(--glass-border); }
+        .premium-shadow { box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1); }
+        .dark .premium-shadow { box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); }
+        .magical-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        body { transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-lift { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .hover-lift:hover { transform: translateY(-8px) scale(1.02); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.6; filter: contrast(1.1) brightness(0.8); }
+        .dark .video-bg { opacity: 0.4; filter: contrast(1.2) brightness(0.5); }
+        .video-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%); }
+        .dark .video-overlay { background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 100%); }
+
+        /* Rich Hover Styles */
+        .book-mention {
+            color: #6366f1; font-weight: 700; border-bottom: 2px dashed #6366f1; cursor: pointer; position: relative; padding: 0 2px; transition: all 0.3s ease;
+        }
+        .book-mention:hover { background: rgba(99, 102, 241, 0.1); border-bottom-style: solid; }
+
+        #book-tooltip {
+            position: fixed; z-index: 9999; width: 150px; pointer-events: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: scale(0.9) translateY(10px);
+        }
+        #book-tooltip.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+        /* Bot Avatar Animation */
+        .bot-avatar-video {
+            mix-blend-mode: screen;
+            filter: brightness(1.2) contrast(1.1);
+        }
+        .dark .bot-avatar-video {
+            filter: brightness(1.1) contrast(1.2);
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-darkBg text-slate-900 dark:text-slate-100 min-h-screen">
+
+    <!-- Global Tooltip for Book Hovers -->
+    <div id="book-tooltip" class="glass premium-shadow rounded-2xl p-2 overflow-hidden border border-white/30 backdrop-blur-3xl">
+        <img id="tooltip-img" src="" class="w-full h-auto rounded-xl shadow-lg mb-2" alt="">
+        <div id="tooltip-author" class="text-[10px] font-black uppercase tracking-tighter text-center italic opacity-60"></div>
+    </div>
+
+    <!-- Floating Navbar -->
+    <div class="fixed top-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none">
+        <nav class="glass premium-shadow max-w-6xl w-full px-8 py-4 rounded-[2rem] flex justify-between items-center pointer-events-auto animate-fade-in-up">
+            <a href="/" class="text-2xl font-extrabold flex items-center gap-2 group">
+                <div class="w-10 h-10 magical-gradient rounded-xl flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <span class="bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">NovelSage AI</span>
+            </a>
+
+            <div class="flex items-center space-x-1">
+                {% if current_user.is_authenticated %}
+                <a href="/home" class="px-5 py-2 rounded-xl hover:bg-white/10 dark:hover:bg-white/5 transition font-medium">Home</a>
+                <a href="/dashboard" class="px-5 py-2 rounded-xl hover:bg-white/10 dark:hover:bg-white/5 transition font-medium">Library</a>
+                <a href="/logout" class="px-5 py-2 text-red-500 hover:bg-red-500/10 rounded-xl transition font-medium">Logout</a>
+                {% else %}
+                <a href="/login" class="px-5 py-2 rounded-xl hover:bg-white/10 dark:hover:bg-white/5 transition font-medium">Login</a>
+                <a href="/login" class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl font-bold shadow-xl hover:scale-105 active:scale-95 transition-all">Get Started</a>
+                {% endif %}
+
+                <div class="w-px h-6 bg-slate-200 dark:bg-slate-800 mx-3"></div>
+
+                <button id="theme-toggle" class="p-2.5 rounded-xl hover:bg-white/10 dark:hover:bg-white/5 transition text-slate-500 dark:text-slate-400">
+                    <svg id="theme-toggle-dark-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"> <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path> </svg>
+                    <svg id="theme-toggle-light-icon" class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"> <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path> </svg>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main class="pt-32 pb-20"> <div class="container mx-auto px-6"> {% block content %}{% endblock %} </div> </main>
+
+    <!-- NovelBot Widget -->
+    <div id="novelbot-container" class="fixed bottom-8 right-8 z-[9999]">
+        <button id="novelbot-toggle" class="magical-gradient text-white p-5 rounded-2xl shadow-2xl hover:scale-110 active:scale-90 transition-all group relative overflow-hidden">
+            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <svg class="w-8 h-8 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path> </svg>
+        </button>
+
+        <div id="novelbot-window" class="hidden absolute bottom-20 right-0 w-[350px] md:w-[400px] h-[550px] bg-white dark:bg-darkCard rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col border border-white/20 dark:border-white/5 overflow-hidden transition-all duration-500 scale-90 opacity-0 origin-bottom-right">
+            <div class="p-6 magical-gradient text-white flex justify-between items-center relative overflow-hidden">
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md relative overflow-hidden group border border-white/20">
+                        <video id="novelbot-avatar" src="{{ url_for('static', filename='novelbot.mp4') }}" 
+                               class="absolute inset-0 w-full h-full object-cover bot-avatar-video pointer-events-none" 
+                               loop muted playsinline></video>
+                    </div>
+                    <div> <h4 class="font-bold leading-none">NovelBot</h4> <span class="text-[10px] opacity-80 uppercase tracking-widest font-bold">Online Assistant</span> </div>
+                </div>
+                <button id="close-novelbot" class="p-2 hover:bg-white/20 rounded-full transition-colors relative z-10"> <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg> </button>
+            </div>
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-inner">
+                <div class="glass p-4 rounded-2xl rounded-tl-none premium-shadow max-w-[85%]">
+                    <p class="text-sm font-medium">Greetings! I'm NovelBot. What shall we explore today?</p>
+                </div>
+            </div>
+            <div class="p-6 bg-white dark:bg-darkCard border-t border-slate-100 dark:border-slate-800">
+                <div class="bg-slate-100 dark:bg-slate-800 rounded-2xl p-2 flex items-center gap-2">
+                    <input type="text" id="chat-input" placeholder="Consult NovelBot..." class="flex-1 bg-transparent border-none px-4 py-2 font-medium focus:ring-0 outline-none">
+                    <button id="send-chat" class="magical-gradient text-white w-10 h-10 rounded-xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg"> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14M12 5l7 7-7 7"></path></svg> </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Avatar Dynamic Logic ---
+        const botAvatar = document.getElementById('novelbot-avatar');
+        
+        if (botAvatar) {
+            // Force start at 1s and loop between 1s-8s
+            botAvatar.addEventListener('timeupdate', function() {
+                if (this.currentTime >= 8) {
+                    this.currentTime = 1;
+                }
+            });
+            // Initial seek
+            botAvatar.currentTime = 1;
+        }
+        
+        function startBotTalking() { 
+            if(botAvatar) {
+                if (botAvatar.currentTime < 1 || botAvatar.currentTime >= 8) botAvatar.currentTime = 1;
+                botAvatar.play(); 
+            }
+        }
+        function stopBotTalking() { if(botAvatar) botAvatar.pause(); }
+
+        // --- NovelBot Interface Logic ---
+        const novelbotWindow = document.getElementById('novelbot-window');
+        function toggleNovelBot() {
+            if (novelbotWindow.classList.contains('hidden')) {
+                novelbotWindow.classList.remove('hidden');
+                setTimeout(() => { novelbotWindow.classList.add('scale-100', 'opacity-100'); novelbotWindow.classList.remove('scale-90', 'opacity-0'); }, 10);
+            } else {
+                novelbotWindow.classList.remove('scale-100', 'opacity-100'); novelbotWindow.classList.add('scale-90', 'opacity-0');
+                setTimeout(() => novelbotWindow.classList.add('hidden'), 500);
+            }
+        }
+        document.getElementById('novelbot-toggle').onclick = toggleNovelBot;
+        document.getElementById('close-novelbot').onclick = toggleNovelBot;
+
+        // Theme Management
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark'); themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            document.documentElement.classList.remove('dark'); themeToggleDarkIcon.classList.remove('hidden');
+        }
+        themeToggleBtn.addEventListener('click', function () {
+            themeToggleDarkIcon.classList.toggle('hidden'); themeToggleLightIcon.classList.toggle('hidden');
+            if (localStorage.getItem('color-theme') === 'light') { document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark'); }
+            else { document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light'); }
+        });
+
+        // --- Rich Formatting & Tooltip Logic ---
+        const tooltip = document.getElementById('book-tooltip');
+        const tooltipImg = document.getElementById('tooltip-img');
+        const tooltipAuthor = document.getElementById('tooltip-author');
+
+        function formatBotResponse(text) {
+            let processed = text.replace(/\*\*(.*?)\*\*/g, '<b class="text-secondary">$1</b>');
+            processed = processed.replace(/\[BOOK:(.*?)\]/g, (match, p1) => {
+                return `<span class="book-mention" onmouseover="showBookTooltip(this, '${p1.replace(/'/g, "\\'")}')" onmouseleave="hideBookTooltip()">${p1}</span>`;
+            });
+            return processed;
+        }
+
+        async function showBookTooltip(el, title) {
+            try {
+                const response = await fetch(`/get_book_card/${encodeURIComponent(title)}`);
+                const data = await response.json();
+                if (data.image_url) {
+                    tooltipImg.src = data.image_url; tooltipAuthor.textContent = data.author;
+                    const rect = el.getBoundingClientRect();
+                    tooltip.style.left = `${rect.left}px`; tooltip.style.top = `${rect.top - 240}px`;
+                    tooltip.classList.add('visible');
+                }
+            } catch (e) { console.error("Tooltip error:", e); }
+        }
+        function hideBookTooltip() { tooltip.classList.remove('visible'); }
+
+        async function typeWriter(element, rawText, speed = 15) {
+            startBotTalking(); // Animation start
+            const processedHTML = formatBotResponse(rawText);
+            element.innerHTML = '<div class="text-sm font-medium leading-relaxed"></div>';
+            const container = element.firstChild;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = processedHTML;
+            const nodes = [...tempDiv.childNodes];
+            for(let node of nodes) {
+                if(node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    for(let char of text) {
+                        container.innerHTML += char; chatMessages.scrollTop = chatMessages.scrollHeight;
+                        await new Promise(r => setTimeout(r, speed));
+                    }
+                } else {
+                    container.appendChild(node.cloneNode(true)); chatMessages.scrollTop = chatMessages.scrollHeight;
+                    await new Promise(r => setTimeout(r, speed * 2));
+                }
+            }
+            stopBotTalking(); // Animation stop
+        }
+
+        // NovelBot Logic
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-chat');
+        const chatMessages = document.getElementById('chat-messages');
+
+        async function sendMessage() {
+            const msg = chatInput.value.trim(); if (!msg) return;
+            chatInput.value = ''; appendMessage('user', msg);
+            const response = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) });
+            const data = await response.json(); appendMessage('bot', data.response);
+        }
+
+        function appendMessage(sender, text) {
+            const div = document.createElement('div');
+            if (sender === 'user') {
+                div.className = 'magical-gradient text-white p-4 rounded-2xl rounded-tr-none premium-shadow self-end ml-auto max-w-[85%] animate-fade-in-up';
+                div.innerHTML = `<p class="text-sm font-medium leading-relaxed">${text}</p>`;
+                chatMessages.appendChild(div);
+            } else {
+                div.className = 'glass p-4 rounded-2xl rounded-tl-none premium-shadow self-start max-w-[85%] animate-fade-in-up';
+                chatMessages.appendChild(div); typeWriter(div, text);
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        sendBtn.onclick = sendMessage;
+        chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+        window.trackActivity = async (title, action) => { fetch('/track_activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, action }) }); };
+    </script>
+</body>
+
+</html>

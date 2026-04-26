@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-10">
+        <div>
+            <h1 class="text-4xl font-bold mb-2">My Dashboard</h1>
+            <p class="text-gray-500">Track your literary journey and history.</p>
+        </div>
+        <div class="bg-primary/10 p-4 rounded-2xl border border-primary/20">
+            <span class="block text-xs uppercase text-primary font-bold tracking-wider mb-1">Rank</span>
+            <span class="text-2xl font-bold">Bookworm 📚</span>
+        </div>
+    </div>
+
+    <!-- History Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
+            <h3 class="text-gray-500 text-sm mb-2">Books Read</h3>
+            <p class="text-3xl font-bold">{{ activities | selectattr('action_type', 'equalto', 'read') | list | length
+                }}</p>
+        </div>
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
+            <h3 class="text-gray-500 text-sm mb-2">Downloaded</h3>
+            <p class="text-3xl font-bold">{{ activities | selectattr('action_type', 'equalto', 'download') | list |
+                length }}</p>
+        </div>
+        <div class="bg-white dark:bg-darkCard p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
+            <h3 class="text-gray-500 text-sm mb-2">Interests</h3>
+            <p class="text-lg font-bold truncate">{{ current_user.interests }}</p>
+        </div>
+    </div>
+
+    <!-- Activity Log -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6">Recent Activity</h2>
+        <div
+            class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold text-sm">Book Title</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Action</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    {% for activity in activities %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition">
+                        <td class="px-6 py-4 font-medium">{{ activity.book_title }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                                {% if activity.action_type == 'read' %} bg-green-100 text-green-600
+                                {% elif activity.action_type == 'download' %} bg-blue-100 text-blue-600
+                                {% else %} bg-gray-100 text-gray-600 {% endif %}">
+                                {{ activity.action_type }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-10 text-center text-gray-500 italic">No recent activity found.
+                            Start exploring!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

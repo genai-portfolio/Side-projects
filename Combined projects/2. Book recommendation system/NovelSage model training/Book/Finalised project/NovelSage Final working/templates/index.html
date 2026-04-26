@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Background Video (Only on Landing) -->
+<video autoplay muted loop playsinline class="video-bg">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-library-hallway-with-bookshelves-41002-large.mp4" type="video/mp4">
+</video>
+<div class="video-overlay"></div>
+
+<div class="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-12 animate-fade-in-up">
+    <!-- Main Hero Section -->
+    <div class="space-y-6 max-w-4xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-4 py-2 glass rounded-full premium-shadow mb-4 animate-float">
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+            </span>
+            <span class="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Powered by NovelSage Intelligence</span>
+        </div>
+        
+        <h1 class="text-6xl md:text-8xl font-black tracking-tight leading-[1.1]">
+            Read Smarter, <br/>
+            <span class="magical-gradient bg-clip-text text-transparent">Not Harder.</span>
+        </h1>
+        
+        <p class="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
+            NovelSage AI uses advanced hybrid machine learning to curate a digital library tailored personally to your soul.
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap items-center justify-center gap-6">
+        <a href="/login"
+            class="magical-gradient text-white px-10 py-5 rounded-[2rem] font-bold text-xl shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:scale-110 active:scale-95 transition-all">
+            Get Started Free
+        </a>
+        <a href="/login"
+            class="glass px-10 py-5 rounded-[2rem] font-bold text-xl premium-shadow hover:bg-white/20 transition-all border border-white/30 backdrop-blur-3xl">
+            Sign In
+        </a>
+    </div>
+
+    <!-- Stats/Feature Preview -->
+    <div class="grid md:grid-cols-3 gap-8 mt-24 w-full max-w-6xl pb-20">
+        <div class="p-8 glass rounded-[2.5rem] premium-shadow hover-lift group border border-white/20">
+            <div class="w-16 h-16 magical-gradient rounded-2xl flex items-center justify-center text-white mb-6 mx-auto group-hover:rotate-6 transition-transform shadow-lg">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h3 class="font-extrabold text-2xl mb-3">Hybrid Neural Engine</h3>
+            <p class="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Dual-tier filtering algorithms that understand your taste better than you do.</p>
+        </div>
+        
+        <div class="p-8 glass rounded-[2.5rem] premium-shadow hover-lift group border border-white/20 active-glow">
+            <div class="w-16 h-16 magical-gradient rounded-2xl flex items-center justify-center text-white mb-6 mx-auto group-hover:rotate-6 transition-transform shadow-lg">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <h3 class="font-extrabold text-2xl mb-3">Infinite Discovery</h3>
+            <p class="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">Aggressively scans the global archives to find the digital copy you need.</p>
+        </div>
+        
+        <div class="p-8 glass rounded-[2.5rem] premium-shadow hover-lift group border border-white/20">
+            <div class="w-16 h-16 magical-gradient rounded-2xl flex items-center justify-center text-white mb-6 mx-auto group-hover:rotate-6 transition-transform shadow-lg">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            </div>
+            <h3 class="font-extrabold text-2xl mb-3">NovelBot Concierge</h3>
+            <p class="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">A specialized literary expert bot integrated directly with NovelBot Neural Engine.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Specific Landing Adjustments */
+    main {
+        position: relative;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}

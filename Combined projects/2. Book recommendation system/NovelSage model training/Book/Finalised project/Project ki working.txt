@@ -1,0 +1,36 @@
+Sbse Pehle online kaam kar lete hein sahi hai 😊
+
+1. Sbse pehla kaam hai beta apka, huggingface.co pe jayen, login karen, upper left side pe apki image hogi profile ki, uspe click karen, then "Access token" pe click karen.
+2. Then click karen "Create new token" pe.
+3. Bs aik option pe tick karna "Make calls to Inference Providers"
+4. Neeche scroll karna and then click karna "Create access token" ya kch is Tarah hi hoga
+5. Samne aik token aye ga, copy karlo usko aur save kar lena
+
+-----------------------------------------------------------------------------------
+
+
+Agla kaam hoga is token to code file mein place karna
+
+1. "NovelSage Final Working" mein jana, wahan aik file padi hogi ".env" ke naam se.
+2. Usko open karna and then huggingface token ki jagah apne token ki value likh dena.
+3. file ko save kr dena, and all good
+
+-----------------------------------------------------------------------------------
+
+Teesra kaam hoga, to install dependencies/libraries
+
+1. open cmd, and "NovelSage Final working" ke folder tak ana change directory karte karte (Used GPT, if you got confused)
+2. jese hi ap folder mein pohanch jayen, write:
+      
+     pip install -r requirements.txt      (agar ye na chale, to phir...)
+     python -m pip install -r requirements.txt (likhna)
+
+3. Thoda time lagega, and libraries download ho jayen gi.
+
+-----------------------------------------------------------------------------------
+
+Final kaam:
+
+While being in the folder of "NovelSage Final Working" in cmd, of course, apne likhna hai "python app.py"
+
+and congrats, your app works🥳

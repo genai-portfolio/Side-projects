@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10">
+    <div class="glass p-10 rounded-3xl shadow-xl text-center">
+        <h2 class="text-4xl font-bold mb-4">What do you like to read?</h2>
+        <p class="text-gray-500 mb-8 text-lg">Select your favorite genres or topics to personalize your recommendations.
+        </p>
+
+        <form method="POST">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                {% for genre in genres %}
+                <label class="cursor-pointer group">
+                    <input type="checkbox" name="interests" value="{{ genre }}" class="hidden peer">
+                    <div
+                        class="p-4 rounded-2xl border-2 border-gray-100 dark:border-gray-800 transition peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary group-hover:bg-gray-50 dark:group-hover:bg-gray-800">
+                        <span class="font-semibold">{{ genre }}</span>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit"
+                class="bg-primary text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-secondary transition shadow-lg active:scale-95">
+                Complete Setup
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

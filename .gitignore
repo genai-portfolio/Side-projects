@@ -44,6 +44,9 @@ pnpm-debug.log*
 **/site/
 
 # Python virtual environments (recursive)
+**/.env
+**/.env.*
+!**/.env.template
 **/.venv/
 **/venv/
 **/env/
@@ -51,3 +54,39 @@ pnpm-debug.log*
 
 # Archives
 *.zip
+
+# Large files / ML artifacts (prevent accidental heavy commits)
+# Note: .gitignore cannot filter by file size, only by pattern.
+**/downloads/
+**/checkpoints/
+**/artifacts/
+**/weights/
+
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.npy
+*.npz
+*.parquet
+*.feather
+
+*.db
+*.sqlite
+*.sqlite3
+
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+*.pdf
+*.epub

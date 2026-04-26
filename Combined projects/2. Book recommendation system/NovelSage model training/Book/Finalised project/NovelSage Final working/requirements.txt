@@ -1,0 +1,15 @@
+flask
+flask-sqlalchemy
+flask-login
+huggingface_hub
+python-dotenv
+pandas
+numpy
+scipy
+scikit-learn
+requests
+gunicorn
+selenium
+webdriver-manager
+fpdf
+

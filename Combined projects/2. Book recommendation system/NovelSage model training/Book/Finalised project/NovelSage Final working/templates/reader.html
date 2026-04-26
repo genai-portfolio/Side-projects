@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelSage Reader - {{ title }}</title>
+    <!-- Use Tailwind for consistency with existing app -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; overflow: hidden; }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .reader-container {
+            height: calc(100vh - 64px);
+            width: 100vw;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Navbar -->
+    <nav class="h-16 glass fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+            <a href="/home" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition group">
+                <svg class="w-6 h-6 text-gray-600 transition group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <div class="flex flex-col">
+                <span class="text-xs text-primary font-bold uppercase tracking-wider">NovelSage Reader</span>
+                <h1 class="text-sm font-semibold truncate max-w-md">{{ title }}</h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="toggleFullscreen()" class="p-2 bg-white/50 hover:bg-white rounded-xl shadow-sm transition border border-gray-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+            </button>
+            <a href="/serve_book/{{ filename }}" download class="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition">
+                Download Offline
+            </a>
+        </div>
+    </nav>
+
+    <!-- Reader Area -->
+    <main class="mt-16 reader-container relative bg-gray-200 dark:bg-gray-950">
+        <iframe 
+            src="/serve_book/{{ filename }}#toolbar=0&navpanes=0&scrollbar=1" 
+            class="w-full h-full border-none"
+            type="application/pdf"
+            title="Book Reader"
+        ></iframe>
+        
+        <!-- Subtle Side Controls (Optional) -->
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4">
+            <!-- Floating control placeholders -->
+        </div>
+    </main>
+
+    <script>
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
